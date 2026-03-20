@@ -1,0 +1,296 @@
+:root {
+    /* YouTube Dark Theme Base Colors */
+    --bg-base: #0f0f0f;
+    --text-primary: #f1f1f1;
+    --text-secondary: #aaaaaa;
+    
+    /* Modern YouTube Accents */
+    --accent-primary: #f1f1f1;
+    --accent-primary-text: #0f0f0f;
+    --accent-blue: #3ea6ff; /* YouTube link/focus blue */
+    
+    /* Windows 11 Fluent Variables */
+    --fluent-glass: rgba(33, 33, 33, 0.65);
+    --fluent-surface: rgba(255, 255, 255, 0.08);
+    --fluent-surface-hover: rgba(255, 255, 255, 0.12);
+    --fluent-border: rgba(255, 255, 255, 0.12);
+    
+    /* Status Colors */
+    --error: #ff4e45; /* YT Red */
+    --success: #2ba640;
+    --warning: #fbc02d;
+
+    /* Geometry */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-pill: 36px;
+    --transition-fluent: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    background-color: var(--bg-base);
+    /* Subtle background blooms to make the Fluent glass effect pop */
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(255, 255, 255, 0.03), transparent 30%),
+        radial-gradient(circle at 85% 30%, rgba(62, 166, 255, 0.04), transparent 30%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: "Segoe UI Variable Display", "Segoe UI", "Roboto", "Helvetica Neue", sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+.container {
+    width: 100%;
+    max-width: 760px;
+    padding: 60px 20px;
+    box-sizing: border-box;
+}
+
+h1 { 
+    margin-top: 0; 
+    font-weight: 600; 
+    font-size: 28px;
+    letter-spacing: -0.5px;
+}
+
+p { 
+    color: var(--text-secondary); 
+    font-size: 15px;
+}
+
+/* Glassmorphism Panel (Fluent) */
+.fluent-panel {
+    background: var(--fluent-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--fluent-border);
+    border-radius: var(--radius-md);
+    padding: 32px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Login Screen */
+#login-screen { 
+    text-align: center; 
+    margin-top: 8vh; 
+    transition: opacity 0.4s ease, visibility 0.4s; 
+}
+.login-icon {
+    margin-bottom: 16px;
+    filter: brightness(0) invert(1); /* Ensure it's white */
+}
+.divider { 
+    margin: 24px 0; 
+    color: var(--text-secondary); 
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--fluent-border);
+    margin: 0 16px;
+}
+
+/* App Screen */
+#app-screen { 
+    opacity: 0; 
+    visibility: hidden; 
+    transition: opacity 0.4s ease, visibility 0.4s; 
+}
+
+/* YouTube Style Tabs */
+.tabs { 
+    display: flex; 
+    gap: 12px; 
+    margin-bottom: 24px; 
+    overflow-x: auto;
+}
+.tab { 
+    background: var(--fluent-surface); 
+    border: 1px solid transparent; 
+    color: var(--text-primary); 
+    font-size: 15px; 
+    font-weight: 500; 
+    padding: 10px 20px; 
+    border-radius: var(--radius-sm); 
+    cursor: pointer; 
+    transition: var(--transition-fluent);
+    display: flex;
+    align-items: center;
+}
+.tab:hover { 
+    background: var(--fluent-surface-hover); 
+}
+.tab.active { 
+    background: var(--accent-primary); 
+    color: var(--accent-primary-text); 
+}
+
+.tab-content {
+    display: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.tab-content.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Form Elements (Windows 11 + YouTube Blend) */
+.form-group { margin-bottom: 24px; }
+label { 
+    display: block; 
+    margin-bottom: 8px; 
+    font-size: 14px; 
+    font-weight: 500;
+    color: var(--text-primary); 
+}
+input[type="text"], input[type="number"] {
+    width: 100%; 
+    padding: 14px 16px; 
+    border-radius: var(--radius-sm); 
+    border: 1px solid var(--fluent-border);
+    border-bottom: 2px solid var(--fluent-border); /* Fluent bottom accent */
+    background: rgba(0, 0, 0, 0.2); 
+    color: var(--text-primary); 
+    box-sizing: border-box; 
+    font-size: 16px;
+    font-family: inherit;
+    transition: var(--transition-fluent);
+}
+input[type="text"]::placeholder, input[type="number"]::placeholder {
+    color: #666666;
+}
+input[type="text"]:focus, input[type="number"]:focus {
+    outline: none; 
+    background: rgba(0, 0, 0, 0.4);
+    border-color: var(--fluent-border);
+    border-bottom-color: var(--accent-blue); /* YouTube/Windows blue focus */
+}
+
+/* Buttons (Modern YouTube Pills) */
+.btn {
+    background: var(--fluent-surface); 
+    color: var(--text-primary); 
+    border: 1px solid var(--fluent-border);
+    padding: 10px 24px; 
+    border-radius: var(--radius-pill); 
+    cursor: pointer; 
+    font-size: 14px; 
+    font-weight: 600;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fluent);
+}
+.btn:hover { 
+    background: var(--fluent-surface-hover); 
+}
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary { 
+    background: var(--accent-primary); 
+    color: var(--accent-primary-text); 
+    border: none; 
+    padding: 12px 24px;
+}
+.btn-primary:hover { 
+    background: #d9d9d9; 
+}
+.btn-full { 
+    width: 100%; 
+    margin-top: 8px; 
+    font-size: 15px; 
+    padding: 14px 24px;
+}
+
+/* File Input */
+input[type="file"] { display: none; }
+.file-label { margin-right: 15px; }
+
+/* Status */
+#status-msg { 
+    margin-top: 20px; 
+    text-align: center; 
+    font-weight: 500; 
+    font-size: 14px;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-fluent); 
+}
+#status-msg:not(:empty) {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--fluent-border);
+}
+.text-error { color: var(--error); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-secondary { color: var(--text-secondary); font-size: 14px;}
+
+/* Table (Fluent Rows) */
+.table-container { 
+    overflow-x: auto; 
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--fluent-border);
+    background: rgba(0, 0, 0, 0.2);
+}
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+}
+th, td { 
+    padding: 16px; 
+    text-align: left; 
+    border-bottom: 1px solid var(--fluent-border); 
+}
+th { 
+    color: var(--text-secondary); 
+    font-weight: 600; 
+    font-size: 13px; 
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+tr:last-child td { border-bottom: none; }
+tr { transition: var(--transition-fluent); }
+tr:hover { background: var(--fluent-surface); }
+
+/* User badge */
+.user-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(0,0,0,0.3); 
+    padding: 8px 16px;
+    border-radius: var(--radius-pill); 
+    font-size: 13px; 
+    margin-bottom: 24px; 
+    border: 1px solid var(--fluent-border);
+}
+.user-badge strong {
+    color: var(--text-primary);
+    margin-left: 6px;
+}
+.logout-link { 
+    color: var(--accent-blue); 
+    cursor: pointer; 
+    margin-left: 16px; 
+    font-weight: 600;
+    text-decoration: none; 
+    transition: var(--transition-fluent);
+}
+.logout-link:hover {
+    text-decoration: underline;
+}
