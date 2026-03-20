@@ -211,7 +211,7 @@ async function publishLyrics() {
 
 async function loadMyLyrics() {
     const tbody = document.querySelector('#lyrics-table tbody');
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
 
     try {
         const json = await fetchUserLyrics(currentUser.keyId);
@@ -219,13 +219,15 @@ async function loadMyLyrics() {
 
         tbody.innerHTML = '';
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No lyrics found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No lyrics found.</td></tr>';
             return;
         }
 
         data.forEach(item => {
+            const lyricsId = item.id || item._id || item.videoId || 'N/A';
             const tr = document.createElement('tr');
             tr.innerHTML = `
+                <td>${lyricsId}</td>
                 <td>${item.song || 'Unknown'}</td>
                 <td>${item.artist || 'Unknown'}</td>
                 <td><span style="background:#333;padding:2px 6px;border-radius:4px;font-size:12px;">${(item.format || 'lrc').toUpperCase()}</span></td>
@@ -234,6 +236,6 @@ async function loadMyLyrics() {
             tbody.appendChild(tr);
         });
     } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-error" style="text-align:center;">${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-error" style="text-align:center;">${error.message}</td></tr>`;
     }
 }
