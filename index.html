@@ -1,142 +1,125 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unison Publisher</title>
+    <title>Unison | Community Lyrics</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body id="page-search">
 
-<div class="container">
-    
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen">
-        <img src="resources/LoginIcon.svg" width="72" height="72" class="login-icon">
-        <h1>Unison Publisher</h1>
-        <p>Login to your Better Lyrics account</p>
-        
-        <div class="fluent-panel" style="margin-top: 32px;">
-            <!-- Primary button requires a dark icon to contrast against the white button -->
-            <button class="btn btn-primary btn-full" id="btn-upload-identity">
-                <img src="resources/UploadBetterLrcCredintials.svg" width="18" height="18" style="filter: brightness(0); vertical-align: middle; margin-right: 8px;"> Upload Identity JSON
-            </button>
-            <input type="file" id="identity-file" accept=".json">
-            
-            <div class="divider">OR</div>
-            
-            <!-- Secondary button requires a white icon to contrast against dark glass -->
-            <button class="btn btn-full" id="btn-default-login">
-                <img src="resources/UseDefaultLogin.svg" width="18" height="18" style="filter: brightness(0) invert(1); vertical-align: middle; margin-right: 8px;"> Use Default (MysticSnareRise)
-            </button>
+    <header class="top-nav">
+        <div class="nav-left">
+            <a href="index.html" class="logo">
+                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
+                <div class="logo-text">
+                    <h1>Unison</h1>
+                    <span>Community Lyrics</span>
+                </div>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html" id="nav-search">Search</a>
+                <a href="submissions.html" id="nav-submissions">My Submissions</a>
+            </nav>
         </div>
-    </div>
-
-    <!-- APP SCREEN -->
-    <div id="app-screen">
-        
-        <div class="user-badge">
-            Logged in as: <strong id="display-name">User</strong>
-            <span class="logout-link" id="btn-logout">Logout</span>
-        </div>
-
-        <div class="tabs">
-            <!-- In YouTube style, Active tab has a dark icon (white bg), inactive tabs have white icons (dark bg) -->
-            <button class="tab active" data-target="publish" id="tab-btn-publish">
-                <img src="resources/Publish_Tab_Icon.svg" width="18" height="18" class="tab-icon" style="filter: brightness(0); vertical-align: middle; margin-right: 8px;"> Publish Lyrics
-            </button>
-            <button class="tab" data-target="check" id="tab-btn-check">
-                <img src="resources/Music.svg" width="18" height="18" class="tab-icon" style="filter: brightness(0) invert(1); vertical-align: middle; margin-right: 8px;"> My Submissions
-            </button>
-        </div>
-
-        <div class="fluent-panel">
-            <!-- PUBLISH TAB -->
-            <div id="tab-publish" class="tab-content active">
-                <div class="form-group">
-                    <label>Video ID</label>
-                    <input type="text" id="vid" placeholder="e.g. dQw4w9WgXcQ">
-                </div>
-                <div class="form-group">
-                    <label>Song Title</label>
-                    <input type="text" id="song" placeholder="Never Gonna Give You Up">
-                </div>
-                <div class="form-group">
-                    <label>Artist</label>
-                    <input type="text" id="artist" placeholder="Rick Astley">
-                </div>
-                <div class="form-group">
-                    <label>Duration</label>
-                    <input type="text" id="dur" placeholder="Seconds or MM:SS (e.g. 213 or 3:33)">
-                </div>
-                <div class="form-group">
-                    <label>Album <span style="color: var(--text-secondary); font-weight: 400;">(Optional)</span></label>
-                    <input type="text" id="album" placeholder="Whenever You Need Somebody">
-                </div>
-                
-                <div class="form-group" style="margin-top: 32px; display: flex; align-items: center;">
-                    <label class="btn file-label" id="btn-browse-lyrics">
-                        <img src="resources/UploadLyricsFile.svg" width="18" height="18" style="filter: brightness(0) invert(1); vertical-align: middle; margin-right: 8px;"> Browse .lrc / .ttml
-                    </label>
-                    <span id="selected-file-name" class="text-secondary">No file selected</span>
-                    <input type="file" id="lyrics-file" accept=".lrc,.ttml">
-                </div>
-
-                <button class="btn btn-primary btn-full" id="btn-publish" style="margin-top: 16px;">
-                    <img src="resources/Publish_Tab_Icon.svg" width="18" height="18" style="filter: brightness(0); vertical-align: middle; margin-right: 8px;"> Publish to Unison
-                </button>
-
-                <div id="status-msg"></div>
+        <div class="nav-right">
+            <div class="search-bar">
+                <span class="material-symbols-rounded">search</span>
+                <input type="text" id="global-search" class="input-element" placeholder="Search songs, artists...">
             </div>
+            <a href="submit.html" class="btn btn-primary">
+                <span class="material-symbols-rounded">add</span> Submit Lyrics
+            </a>
+            <a href="account.html" class="btn btn-icon" title="Account Settings">
+                <span class="material-symbols-rounded">person</span>
+            </a>
+        </div>
+    </header>
 
-            <!-- CHECK TAB -->
-            <div id="tab-check" class="tab-content">
-                <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
-                    <button class="btn" id="btn-refresh">
-                        <img src="resources/Refresh.svg" width="16" height="16" style="filter: brightness(0) invert(1); vertical-align: middle; margin-right: 8px;"> Refresh
-                    </button>
-                </div>
-                <div class="table-container">
-                    <table id="lyrics-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Song</th>
-                                <th>Artist</th>
-                                <th>Format</th>
-                                <th>Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Content loaded dynamically -->
-                        </tbody>
-                    </table>
+    <main>
+        <div id="home-default-view">
+            <div class="welcome-section animate-fade-up">
+                <h2 id="greeting-text">Good Morning, User</h2>
+                <p class="text-secondary" id="time-text">-- : --</p>
+            </div>
+            
+            <div class="animate-fade-up" style="animation-delay: 0.1s;">
+                <h3 class="mb-2" style="font-size:1.4rem;">Quick access</h3>
+                <div class="products-grid">
+                    
+                    <div class="product-card">
+                        <div class="product-header" style="background-image: url('https://camo.githubusercontent.com/0412e5bdfc5dca7a469578ee0e766ab341d1db7f367b1c5e01d2d42c8129c555/68747470733a2f2f7265732e636c6f7564696e6172792e636f6d2f626f6964752f696d6167652f75706c6f61642f745f62616e6e65722f76313735393533363833332f626c2f62616e6e65722e706e67');">
+                            <div class="product-icon">
+                                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Better Lyrics">
+                            </div>
+                        </div>
+                        <div class="product-body">
+                            <h3 class="product-title">Better Lyrics</h3>
+                            <p class="product-desc">Enhance YouTube Music with beautiful time-synced lyrics, multilingual support, real-time translations and more.</p>
+                            <div class="product-footer">
+                                <a href="https://better-lyrics.boidu.dev/" target="_blank" class="btn btn-primary" style="margin-left:auto;">
+                                    Visit <span class="material-symbols-rounded" style="font-size: 18px;">arrow_outward</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lyrics Composer -->
+                    <div class="product-card">
+                        <div class="product-header" style="background: linear-gradient(135deg, #1f2937, #374151);">
+                            <div class="product-icon">
+                                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Composer">
+                            </div>
+                        </div>
+                        <div class="product-body">
+                            <h3 class="product-title">Lyrics Composer</h3>
+                            <p class="product-desc">Advanced, intuitive word-synced lyrics composer designed directly for the Better Lyrics ecosystem.</p>
+                            <div class="product-footer">
+                                <a href="https://composer.boidu.dev/" target="_blank" class="btn btn-primary" style="margin-left:auto;">
+                                    Visit <span class="material-symbols-rounded" style="font-size: 18px;">arrow_outward</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LySy -->
+                    <div class="product-card">
+                        <div class="product-header" style="background: linear-gradient(135deg, #4338ca, #312e81);">
+                            <div class="product-icon">
+                                <span class="material-symbols-rounded" style="font-size:36px;">lyrics</span>
+                            </div>
+                        </div>
+                        <div class="product-body">
+                            <h3 class="product-title">LySy</h3>
+                            <p class="product-desc">Simple, lightweight and fast word-synced lyrics composer for creating TTML payloads effortlessly.</p>
+                            <div class="product-footer">
+                                <a href="https://pxeemo.github.io/LySy/" target="_blank" class="btn btn-primary" style="margin-left:auto;">
+                                    Visit <span class="material-symbols-rounded" style="font-size: 18px;">arrow_outward</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
-    </div>
 
-</div>
+        <div id="search-results-view" style="display: none;">
+            <div class="page-header animate-fade-up">
+                <h2 id="search-header">Search Results</h2>
+            </div>
+            <div class="cards-grid" id="search-results">
+            </div>
+        </div>
+    </main>
 
-<script>
-    // Minimal JS to handle the YouTube style tab icon inversions natively
-    // Note: You can append this logic into your main.js file
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            // Reset all tab icons to white (inactive)
-            document.querySelectorAll('.tab .tab-icon').forEach(icon => {
-                icon.style.filter = 'brightness(0) invert(1)';
-            });
-            
-            // Set clicked tab icon to black (active state uses white background)
-            const activeIcon = tab.querySelector('.tab-icon');
-            if (activeIcon) {
-                activeIcon.style.filter = 'brightness(0)';
-            }
-        });
-    });
-</script>
-<!-- Use type="module" to enable modern JavaScript imports -->
-<script type="module" src="js/main.js"></script>
+    <footer class="app-footer">
+        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
+            Made by Walker
+            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Submissions | Unison</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body id="page-submissions">
+
+    <header class="top-nav">
+        <div class="nav-left">
+            <a href="index.html" class="logo">
+                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
+                <div class="logo-text">
+                    <h1>Unison</h1>
+                    <span>Community Lyrics</span>
+                </div>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html" id="nav-search">Search</a>
+                <a href="submissions.html" id="nav-submissions">My Submissions</a>
+            </nav>
+        </div>
+        <div class="nav-right">
+            <a href="submit.html" class="btn btn-primary">
+                <span class="material-symbols-rounded">add</span> Submit Lyrics
+            </a>
+            <a href="account.html" class="btn btn-icon" title="Account Settings">
+                <span class="material-symbols-rounded">person</span>
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-header animate-fade-up">
+            <h2 id="search-header">My Submissions</h2>
+        </div>
+        <div class="cards-grid" id="search-results">
+            <!-- Dynamic Submissions grid logic identical to search injected via app.js -->
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
+            Made by Walker
+            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

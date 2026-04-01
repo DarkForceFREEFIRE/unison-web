@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account | Unison</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body id="page-account">
+
+    <header class="top-nav">
+        <div class="nav-left">
+            <a href="index.html" class="logo">
+                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
+                <div class="logo-text">
+                    <h1>Unison</h1>
+                    <span>Settings</span>
+                </div>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html" id="nav-search">Search</a>
+                <a href="submissions.html" id="nav-submissions">My Submissions</a>
+            </nav>
+        </div>
+        <div class="nav-right">
+            <a href="index.html" class="btn"><span class="material-symbols-rounded">home</span> Home</a>
+        </div>
+    </header>
+
+    <main class="animate-fade-up">
+        <div class="page-header" style="text-align: left;">
+            <h2>Account Settings</h2>
+        </div>
+
+        <div class="panel" style="max-width: 650px;">
+            <div class="flex-between mb-2">
+                <div>
+                    <h3 id="acc-name" style="font-size: 1.25rem;">User Name</h3>
+                    
+                    <div id="private-details" style="display: none; margin-top: 12px;">
+                        <p class="text-secondary" style="font-family: var(--font-mono); font-size: 0.85rem;" id="acc-key"></p>
+                        <div class="flex-between mt-1" style="justify-content: flex-start; gap: 12px;">
+                            <button class="btn btn-small" id="copy-id-btn"><span class="material-symbols-rounded" style="font-size: 16px;">content_copy</span> Copy ID</button>
+                            <button class="btn btn-small" id="export-btn"><span class="material-symbols-rounded" style="font-size: 16px;">download</span> Export Identity</button>
+                        </div>
+                    </div>
+
+                </div>
+                <button class="btn btn-danger" onclick="logout()">
+                    <span class="material-symbols-rounded">logout</span> Logout
+                </button>
+            </div>
+            
+            <hr>
+
+            <div class="flex-between">
+                <div>
+                    <h4>Theme Preferences</h4>
+                    <p class="text-secondary" style="font-size: 0.85rem;">Toggle between Light and Dark mode UI.</p>
+                </div>
+                <button class="btn" id="theme-toggle-btn">
+                    <span class="material-symbols-rounded">contrast</span> Switch Theme
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
+            Made by Walker
+            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

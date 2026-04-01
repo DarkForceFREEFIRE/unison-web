@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Lyrics | Unison</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body id="page-submit">
+
+    <header class="top-nav">
+        <div class="nav-left">
+            <a href="index.html" class="logo">
+                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
+                <div class="logo-text">
+                    <h1>Unison</h1>
+                    <span>Submit Lyrics</span>
+                </div>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html" id="nav-search">Search</a>
+                <a href="submissions.html" id="nav-submissions">My Submissions</a>
+            </nav>
+        </div>
+        <div class="nav-right">
+            <a href="account.html" class="btn btn-icon"><span class="material-symbols-rounded">person</span></a>
+        </div>
+    </header>
+
+    <main class="animate-fade-up">
+        <div class="page-header" style="text-align: left;">
+            <h2>Submit Lyrics</h2>
+            <p class="text-secondary">Submit community lyrics. Converters available for ELRC format.</p>
+        </div>
+
+        <div class="split-layout submit-layout">
+            <div class="form-pane">
+                <div class="pane-content">
+                    <div class="form-row">
+                        <div class="form-group"><label>Song Title *</label><input type="text" id="sub-song" class="input-element"></div>
+                        <div class="form-group"><label>Artist *</label><input type="text" id="sub-artist" class="input-element"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Album</label><input type="text" id="sub-album" class="input-element"></div>
+                        <div class="form-group"><label>Duration (sec) *</label><input type="number" id="sub-duration" class="input-element"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Video ID *</label><input type="text" id="sub-vid" class="input-element"></div>
+                        <div class="form-group"><label>Format</label>
+                            <select id="sub-format" class="input-element">
+                                <option value="auto">Auto-detect</option>
+                                <option value="ttml">TTML (Richsync)</option>
+                                <option value="lrc">LRC (Linesync)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <div class="flex-between" style="margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                            <label style="margin:0;">Lyrics Payload *</label>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        
+                        <button class="btn btn-small" onclick="document.getElementById('lyrics-file').click()">
+                            <span class="material-symbols-rounded" style="font-size: 16px;">upload_file</span> Upload
+                        </button>
+                        <input type="file" id="lyrics-file" accept=".lrc,.elrc,.ttml,.txt" style="display:none;" onchange="handleLyricsFileUpload(event)">
+        
+        
+                        <button class="btn btn-small" onclick="convertLyrics('lrc')">To LRC</button>
+                        <button class="btn btn-small" onclick="convertLyrics('ttml')">To TTML</button>
+                </div>
+</div>
+                        <textarea id="sub-lyrics" rows="12" class="input-element" placeholder="Paste lyrics here..."></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-full mt-2" id="submit-btn" onclick="submitLyricsForm()">
+                        <span class="material-symbols-rounded">publish</span> Submit to Unison
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fixed scrollable preview box -->
+            <div class="preview-pane panel" style="padding: 0;">
+                <label class="section-label" style="padding: 24px 24px 0;">Live Preview</label>
+                <div class="pane-content" style="padding: 12px 24px 24px;">
+                    <div id="preview-box" class="text-muted">Preview will appear here...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
+            Made by Walker
+            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

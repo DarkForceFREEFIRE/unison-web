@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyric Details | Unison</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body id="page-detail">
+
+    <header class="top-nav">
+        <div class="nav-left">
+            <a href="index.html" class="logo">
+                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
+                <div class="logo-text">
+                    <h1>Unison</h1>
+                    <span>Lyric Inspector</span>
+                </div>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html" id="nav-search">Search</a>
+                <a href="submissions.html" id="nav-submissions">My Submissions</a>
+            </nav>
+        </div>
+        <div class="nav-right">
+            <a href="index.html" class="btn"><span class="material-symbols-rounded">arrow_back</span> Back</a>
+        </div>
+    </header>
+
+    <main class="animate-fade-up">
+        <div class="split-layout detail-layout">
+            <div class="meta-pane">
+                <h2 id="det-title" style="font-size: 1.75rem; line-height:1.2;">Loading...</h2>
+                <p id="det-artist" class="text-secondary mt-1" style="font-size: 1.1rem;">Loading...</p>
+
+                <div class="meta-grid mt-3">
+                    <span class="meta-lbl">FORMAT</span> <span id="det-format" class="meta-val">--</span>
+                    <span class="meta-lbl">SYNC</span> <span id="det-sync" class="meta-val">--</span>
+                    <span class="meta-lbl">LANG</span> <span id="det-lang" class="meta-val">--</span>
+                </div>
+
+                <div class="vote-section">
+                    <div class="vote-score" id="det-score">0.0</div>
+                    <div class="text-secondary" id="det-votecount">0 votes</div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: auto;">
+                    <button class="btn" onclick="submitVote(1)"><span class="material-symbols-rounded">thumb_up</span> Upvote</button>
+                    <button class="btn" onclick="submitVote(-1)"><span class="material-symbols-rounded">thumb_down</span> Downvote</button>
+                    <button class="btn btn-danger" onclick="document.getElementById('report-dialog').showModal()">
+                        <span class="material-symbols-rounded">flag</span> Report Lyrics
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fixed scrollable panes -->
+            <div class="preview-pane panel" style="padding: 0;">
+                <label class="section-label" style="padding: 24px 24px 0;">Preview</label>
+                <div class="pane-content" style="padding: 12px 24px 24px;">
+                    <div id="det-preview"></div>
+                </div>
+            </div>
+
+            <div class="raw-pane panel" style="padding: 0;">
+                <div class="flex-between" style="padding: 16px 24px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;">
+                    <label class="section-label" style="margin: 0;">Raw Payload</label>
+                    <button class="btn btn-small" onclick="downloadLyrics()">
+                        <span class="material-symbols-rounded" style="font-size: 16px;">download</span> Download
+                    </button>
+                </div>
+                <div class="pane-content" style="padding: 24px;">
+                    <div id="det-raw"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <dialog id="report-dialog">
+        <h3 style="margin-bottom: 16px;">Report Lyrics</h3>
+        <div class="form-group">
+            <label>Reason</label>
+            <select id="report-reason" class="input-element">
+                <option value="wrong_song">Wrong Song</option>
+                <option value="bad_sync">Bad Synchronization</option>
+                <option value="offensive">Offensive Content</option>
+                <option value="spam">Spam</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Details (Optional)</label>
+            <input type="text" id="report-details" class="input-element">
+        </div>
+        <div class="flex-between mt-3">
+            <button class="btn" onclick="document.getElementById('report-dialog').close()">Cancel</button>
+            <button class="btn btn-danger" onclick="submitReport()">Submit Report</button>
+        </div>
+    </dialog>
+
+    <footer class="app-footer">
+        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
+            Made by Walker
+            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
