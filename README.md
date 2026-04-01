@@ -13,5 +13,6 @@ Made with ❤️ by Walker 🇱🇰
 - Search function
 - Download function
 
-<img width="1510" height="856" alt="image" src="https://github.com/user-attachments/assets/7b72a782-5475-4e10-b80a-4c105de58bfb" />
+
+<img width="1224" height="695" alt="Picture1" src="https://github.com/user-attachments/assets/e861827e-bb63-49f9-a52b-63b176e9ab0e" />
 
