@@ -32,6 +32,18 @@
             <h2>Account Settings</h2>
         </div>
 
+        <!-- NEW: Public Account Warning Panel -->
+        <div id="public-account-warning" class="panel" style="background: rgba(245, 166, 35, 0.1); border-color: rgba(245, 166, 35, 0.3); display: none; margin-bottom: 24px;">
+            <div class="flex-between" style="align-items: flex-start; gap: 16px;">
+                <span class="material-symbols-rounded" style="color: #f5a623; font-size: 28px;">warning</span>
+                <div>
+                    <p style="color: #f5a623; font-weight: 700;">You are using a shared public account.</p>
+                    <p class="text-secondary" style="font-size: 0.85rem; margin-top: 4px;">Submissions are not private. To create your own private identity file, use the Better Lyrics extension or the Lyrics Composer website.</p>
+                </div>
+            </div>
+        </div>
+
+
         <div class="panel" style="max-width: 650px;">
             <div class="flex-between mb-2">
                 <div>
@@ -44,7 +56,6 @@
                             <button class="btn btn-small" id="export-btn"><span class="material-symbols-rounded" style="font-size: 16px;">download</span> Export Identity</button>
                         </div>
                     </div>
-
                 </div>
                 <button class="btn btn-danger" onclick="logout()">
                     <span class="material-symbols-rounded">logout</span> Logout
