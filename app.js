@@ -573,6 +573,11 @@ const page = {
         this.stopSyncLoop();
         window.currentActiveLineIndex = -1; 
         
+        // Memory caches so we aren't querying the DOM every frame
+        let activeLineContainer = null;
+        let activeWordElements = [];
+        let lastTime = -1;
+
         const sync = () => {
             let time = 0;
             if (this.activeSource === 'yt' && ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === 1) {
@@ -581,12 +586,38 @@ const page = {
                 const localPlayer = document.getElementById('local-player');
                 if(localPlayer) time = localPlayer.currentTime;
             }
-            
+
+            // OPTIMIZATION 1: Skip frame if time hasn't changed meaningfully
+            if (Math.abs(time - lastTime) < 0.01) {
+                this.syncTimer = requestAnimationFrame(sync);
+                return;
+            }
+            lastTime = time;
+
             if (window.parsedLines && time > 0) {
                 let activeIndex = -1;
-                for (let i = window.parsedLines.length - 1; i >= 0; i--) {
-                    if (time >= window.parsedLines[i].start) {
-                        activeIndex = i; break;
+                const prev = window.currentActiveLineIndex;
+
+                // OPTIMIZATION 2: Fast-Path. Instead of searching the whole song, 
+                // just check if we are on the current line or naturally moved to the next line.
+                if (prev >= 0 && prev < window.parsedLines.length) {
+                    const currentLine = window.parsedLines[prev];
+                    const nextLine = window.parsedLines[prev + 1];
+                    const currentEnd = currentLine.end || currentLine.start + 10;
+                    
+                    if (time >= currentLine.start && time < currentEnd) {
+                        activeIndex = prev;
+                    } else if (nextLine && time >= nextLine.start && time < (nextLine.end || nextLine.start + 10)) {
+                        activeIndex = prev + 1;
+                    }
+                }
+
+                // Fallback: If user scrubbed the video, do the full search to find where they went
+                if (activeIndex === -1) {
+                    for (let i = window.parsedLines.length - 1; i >= 0; i--) {
+                        if (time >= window.parsedLines[i].start) {
+                            activeIndex = i; break;
+                        }
                     }
                 }
 
@@ -595,46 +626,65 @@ const page = {
                     const lineEnd = line.end || line.start + 10;
                     
                     if (time < lineEnd) {
+                        // --- LINE HAS CHANGED ---
                         if (window.currentActiveLineIndex !== activeIndex) {
-                            document.querySelectorAll('.lyric-line.active').forEach(l => l.classList.remove('active'));
-                            const el = document.getElementById(`line-${activeIndex}`);
+                            // Cleanup old active line
+                            if (activeLineContainer) activeLineContainer.classList.remove('active');
+                            else document.querySelectorAll('.lyric-line.active').forEach(l => l.classList.remove('active'));
                             
-                            if (el) {
-                                el.classList.add('active');
-                                const container = el.parentElement;
+                            // Setup new active line
+                            activeLineContainer = document.getElementById(`line-${activeIndex}`);
+                            
+                            if (activeLineContainer) {
+                                activeLineContainer.classList.add('active');
+                                const container = activeLineContainer.parentElement;
                                 container.scrollTo({
-                                    top: el.offsetTop - (container.clientHeight / 2) + (el.clientHeight / 2),
+                                    top: activeLineContainer.offsetTop - (container.clientHeight / 2) + (activeLineContainer.clientHeight / 2),
                                     behavior: 'smooth'
                                 });
+
+                                // OPTIMIZATION 3: Cache the DOM elements for words. 
+                                // We do this ONCE per line instead of 60 times a second.
+                                activeWordElements = [];
+                                if (line.words?.length) {
+                                    for (let wi = 0; wi < line.words.length; wi++) {
+                                        activeWordElements.push(document.getElementById(`word-${activeIndex}-${wi}`));
+                                    }
+                                }
                             }
                             window.currentActiveLineIndex = activeIndex;
                         }
 
+                        // --- UPDATE WORDS WITHIN THE LINE ---
                         if (line.words?.length) {
-                            line.words.forEach((w, wi) => {
-                                const wSpan = document.getElementById(`word-${activeIndex}-${wi}`);
+                            for (let wi = 0; wi < line.words.length; wi++) {
+                                // Pull directly from our lightning-fast memory cache
+                                const wSpan = activeWordElements[wi]; 
                                 if (wSpan) {
-                                    const shouldBeActive = time >= w.start;
-                                    // Optimization: Only update the DOM if the state actually needs to change
+                                    const shouldBeActive = time >= line.words[wi].start;
                                     if (wSpan.classList.contains('active') !== shouldBeActive) {
                                         wSpan.classList.toggle('active', shouldBeActive);
                                     }
                                 }
-                            });
+                            }
                         }
                     } else {
+                        // Handle dead air / instrumental breaks
                         if (window.currentActiveLineIndex !== -1) {
-                            document.querySelectorAll('.lyric-line.active').forEach(l => l.classList.remove('active'));
+                            if (activeLineContainer) activeLineContainer.classList.remove('active');
                             window.currentActiveLineIndex = -1;
+                            activeLineContainer = null;
+                            activeWordElements = [];
                         }
                     }
                 }
             }
-            // Request the next frame
+            
+            // Loop!
             this.syncTimer = requestAnimationFrame(sync);
         };
 
-        // Kick off the loop
+        // Kick it off
         this.syncTimer = requestAnimationFrame(sync);
     },
     
