@@ -1,6 +1,5 @@
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap');
-/* Material Symbols Font */
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0');
 
@@ -53,7 +52,6 @@
     --accent-hover: #4752c4;
 }
 
-/* Custom Scrollbars */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -94,7 +92,7 @@ hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
     font-Variation-Settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* Utils */
+
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 .flex-center { display: flex; justify-content: center; align-items: center; }
 .gap-1 { gap: 8px; } .gap-2 { gap: 16px; } .gap-3 { gap: 24px; }
@@ -103,7 +101,7 @@ hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
 .text-secondary { color: var(--text-secondary); }
 .text-muted { color: var(--text-muted); }
 
-/* Animations */
+
 .animate-fade-up {
     animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -116,7 +114,7 @@ hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 .spinner { animation: spin 1s linear infinite; display: inline-block; }
 
-/* Buttons */
+
 .btn {
     background: var(--btn-bg);
     color: var(--text-primary);
@@ -142,7 +140,7 @@ hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
 .btn-icon { padding: 10px; border-radius: 50%; }
 .btn-small { padding: 6px 12px; font-size: 0.8125rem; }
 
-/* Panels */
+
 .panel {
     background: var(--bg-panel);
     border: 1px solid var(--border-color);
@@ -151,7 +149,7 @@ hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
     box-shadow: 0 8px 24px rgba(0,0,0,0.1);
 }
 
-/* Forms */
+
 .form-group { margin-bottom: 20px; width: 100%; }
 .form-group label {
     display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted);
@@ -165,7 +163,7 @@ input.input-element, select.input-element, textarea {
 textarea { font-family: var(--font-mono); resize: vertical; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); background: var(--bg-elevated); }
 
-/* Navigation */
+
 .top-nav {
     display: flex; justify-content: space-between; align-items: center;
     padding: 16px 32px; background: var(--bg-panel); border-bottom: 1px solid var(--border-color);
@@ -185,17 +183,17 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 .search-bar .material-symbols-rounded { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 .search-bar input { padding-left: 44px; border-radius: 24px; background: var(--bg-base); }
 
-/* Main Layout */
+
 main { flex: 1; padding: 40px; max-width: 1300px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; }
 .page-header { margin-bottom: 32px; text-align: center; }
 .page-header h2 { font-size: 2rem; letter-spacing: -0.02em; }
 
-/* Home Welcome & Products (Updated for Light/Dark Mode) */
+
 .welcome-section { text-align: center; margin-bottom: 40px; padding: 20px 0; }
 .welcome-section h2 { font-size: 2.75rem; letter-spacing: -0.04em; margin-bottom: 8px; }
 .products-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; margin-top: 16px; }
 .product-card {
-    background: var(--bg-panel); /* Adjusted for Light Mode Support */
+    background: var(--bg-panel); 
     border: 1px solid var(--border-color); 
     border-radius: var(--radius-md);
     overflow: hidden; display: flex; flex-direction: column; transition: all 0.2s;
@@ -211,7 +209,7 @@ main { flex: 1; padding: 40px; max-width: 1300px; width: 100%; margin: 0 auto; d
 .product-desc { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5; flex: 1; margin-bottom: 24px;}
 .product-footer { display: flex; align-items: center; justify-content: space-between; }
 
-/* Grid / Cards */
+
 .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
 .card { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between; }
 .card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
@@ -225,7 +223,7 @@ main { flex: 1; padding: 40px; max-width: 1300px; width: 100%; margin: 0 auto; d
 
 .empty-state { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; min-height: 250px; width: 100%; text-align: center; font-size: 1.05rem; }
 
-/* Scrollable Layouts (Submit Page) */
+
 .split-layout { display: grid; gap: 32px; height: calc(100vh - 180px); min-height: 550px; max-height: 900px; }
 .submit-layout { grid-template-columns: 1fr 400px; }
 
@@ -233,7 +231,7 @@ main { flex: 1; padding: 40px; max-width: 1300px; width: 100%; margin: 0 auto; d
 .pane-content { flex: 1; overflow-y: auto; padding-right: 8px; }
 .form-row { display: flex; gap: 20px; }
 
-/* Detail Page Custom Layout (Preserved 100%) */
+
 .detail-container { display: flex; flex-direction: column; gap: 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
 
 .header-card { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px; }
@@ -265,12 +263,10 @@ main { flex: 1; padding: 40px; max-width: 1300px; width: 100%; margin: 0 auto; d
     min-height: 0; 
 }
 
-/* Code / Previews */
 .section-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; flex-shrink: 0; }
 #preview-box, #det-preview { font-family: var(--font-sans); white-space: pre-wrap; font-size: 1.05rem; line-height: 1.8; color: var(--text-primary); word-wrap: break-word;}
 #det-raw { font-family: var(--font-mono); white-space: pre-wrap; font-size: 0.85rem; color: var(--text-secondary); word-wrap: break-word;}
 
-/* Custom Toasts */
 #toast-container { position: fixed; bottom: 32px; right: 32px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
 .toast { display: flex; align-items: center; gap: 12px; padding: 16px 24px; background: var(--bg-panel); color: var(--text-primary); border-radius: var(--radius-md); box-shadow: 0 12px 40px rgba(0,0,0,0.3); border: 1px solid var(--border-color); font-weight: 600; font-size: 0.95rem; animation: toastEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; pointer-events: auto; }
 .toast.hide { animation: toastExit 0.3s ease-in forwards; }
@@ -281,31 +277,26 @@ main { flex: 1; padding: 40px; max-width: 1300px; width: 100%; margin: 0 auto; d
 @keyframes toastEnter { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes toastExit { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
 
-/* Dialog (Preserved 100%) */
 dialog { background: var(--bg-panel); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 32px; width: 440px; margin: auto; box-shadow: 0 24px 64px rgba(0,0,0,0.5); }
 dialog::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); }
 
-/* Footer Credits */
 .app-footer { padding: 24px; margin-top: auto; border-top: 1px solid var(--border-color); background: var(--bg-base); }
 
 @media (max-width: 960px) {
-    /* Main Layout fixes */
     main { padding: 20px; }
     .split-layout { grid-template-columns: 1fr; height: auto; min-height: auto; max-height: none;}
     .form-pane, .pane-content { overflow: visible; height: auto; padding-right: 0;}
     .form-row { flex-direction: column; gap: 0; }
     
-    /* Navigation Redesign for Mobile */
+    
     .top-nav { flex-direction: column; align-items: stretch; padding: 16px 20px; gap: 16px; }
     .nav-left { flex-direction: column; align-items: flex-start; gap: 12px; }
     .nav-links { margin-left: 0; padding-left: 0; border-left: none; width: 100%; display: flex; gap: 16px; }
     .nav-right { width: 100%; justify-content: space-between; }
     .search-bar { width: 100%; flex: 1; margin-right: 12px; }
     
-    /* Dialog Box sizing */
-    dialog { width: 90%; max-width: 400px; padding: 24px; }
     
-    /* Detail View Fixes */
+    dialog { width: 90%; max-width: 400px; padding: 24px; }
     .content-grid { grid-template-columns: 1fr; }
     .header-card { flex-direction: column; align-items: flex-start; }
     .score-box { width: 100%; flex-direction: row; justify-content: space-between; padding: 12px 20px; }
@@ -315,15 +306,10 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); }
     #toast-container { bottom: 16px; right: 16px; left: 16px; align-items: center; }
     .toast { width: 100%; justify-content: center; }
 
-    /* Typography scaling */
     .welcome-section h2 { font-size: 2rem; }
     .page-header h2 { font-size: 1.5rem; }
     .vote-score { font-size: 2.5rem; }
 }
-
-/* ========================================================
-   SUBMIT PAGE MEDIA PLAYER & LYRICS SYNC (NEW ADDITIONS)
-   ======================================================== */
 
 .preview-pane { display: flex; flex-direction: column; height: 100%; max-height: 700px; overflow: hidden; }
 .media-container { background: #000; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--radius-sm); margin-bottom: 16px; overflow: hidden; position: relative; }
@@ -348,7 +334,6 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); }
 .play-btn:hover { transform: scale(1.08); background: #f0f0f0; }
 .hidden { display: none !important; }
 
-/* --- Smooth Lyrics Preview UI & Duets/Background Formatting --- */
 #sync-preview-content {
     flex: 1; overflow-y: auto; padding: 50% 24px; display: flex; flex-direction: column; 
     gap: 20px; position: relative; scroll-behavior: smooth;
@@ -372,7 +357,6 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); }
 }
 .lyric-word.active { color: var(--accent); }
 
-/* --- Added Background Vocal & Duet Styles --- */
 .lyric-word.bg-vocal {
     font-size: 0.75em;
     opacity: 0.8;
@@ -382,7 +366,6 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); }
     color: var(--accentlrc); 
 }
 
-/* Tabs */
 .source-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: var(--bg-input); padding: 4px; border-radius: 8px; }
 .source-tab { flex: 1; padding: 8px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 0.8rem; font-weight: 700; opacity: 0.6; transition: all 0.2s;}
 .source-tab.active { background: var(--bg-panel); opacity: 1; color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
