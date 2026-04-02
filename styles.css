@@ -136,7 +136,7 @@ hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
 }
 .btn:hover { background: var(--btn-hover); color: var(--accent-text); transform: translateY(-1px); }
 .btn:active { transform: translateY(1px); }
-.btn-primary { background: var(--accent); color: var(--accent-text); }
+.btn-primary { background: var(--accent); color: var(--accent-text); border-radius: 100px;}
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-danger { background: rgba(180, 85, 85, 0.15); color: var(--danger); }
 .btn-danger:hover { background: var(--danger); color: #fff; }
