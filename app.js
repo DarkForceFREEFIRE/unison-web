@@ -126,6 +126,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!user && !isLoginPage) { window.location.href = 'login.html'; return; }
     if (user && isLoginPage) { window.location.href = 'index.html'; return; }
 
+    // --- FIX: Global Search Bar Event Listener ---
+    const searchInput = document.getElementById('global-search');
+    if (searchInput) {
+        // Pre-fill search bar if there is an active query in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('q')) {
+            searchInput.value = urlParams.get('q');
+        }
+
+        // Trigger search on "Enter" key press
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = searchInput.value.trim();
+                if (query) {
+                    window.location.href = `index.html?q=${encodeURIComponent(query)}`;
+                } else {
+                    window.location.href = `index.html`; // Go back to default home if cleared
+                }
+            }
+        });
+    }
+    // ---------------------------------------------
+
     const pageId = document.body.id;
     if (pageId === 'page-search') {
         initSearchPage();
@@ -276,7 +299,8 @@ async function initDetailPage() {
     try {
         const res = await apiFetch(`/${id}`);
         const item = res.data;
-        window.currentLyricData = item; 
+        window.currentLyricData = item;
+        window.currentLyricId = id;
 
         document.getElementById('det-title').innerText = item.song || 'Unknown';
         document.getElementById('det-artist').innerText = item.artist || 'Unknown';
@@ -287,21 +311,68 @@ async function initDetailPage() {
         document.getElementById('det-votecount').innerText = `${item.voteCount || 0} votes`;
         document.getElementById('det-raw').innerText = item.lyrics;
 
-        let previewText = item.lyrics;
-        if (item.format === 'ttml') {
-            try {
-                let xmlDoc = new DOMParser().parseFromString(item.lyrics, "text/xml");
-                previewText = Array.from(xmlDoc.getElementsByTagName("p"))
-                                   .map(p => p.textContent.trim().replace(/\s+/g, ' ')).join('\n');
-            } catch(e) {}
-        } else if (item.format === 'lrc') {
-            previewText = item.lyrics.split('\n').map(l => l.replace(/\[.*?\]/g, '').replace(/<.*?>/g, '').trim()).filter(l=>l).join('\n');
+        // Initialize player and interactive preview
+        if (item.videoId && item.videoId !== 'local-file') {
+            page.activeSource = 'yt';
+            const placeholder = document.getElementById('media-placeholder');
+            if(placeholder) placeholder.classList.add('hidden');
+            
+            if (page.isPlayerReady) {
+                if(ytPlayer && typeof ytPlayer.loadVideoById === 'function') ytPlayer.loadVideoById(item.videoId);
+            } else {
+                page.videoIdToLoad = item.videoId;
+            }
+        } else {
+            const placeholder = document.getElementById('media-placeholder');
+            if(placeholder) {
+                placeholder.classList.remove('hidden');
+                placeholder.innerHTML = `<span class="material-symbols-rounded" style="font-size: 48px; margin-bottom: 8px;">music_off</span> Media not available for this entry.`;
+            }
+            const ytContainer = document.getElementById('yt-player-container');
+            if(ytContainer) ytContainer.classList.add('hidden');
         }
-        document.getElementById('det-preview').innerText = previewText || "No preview available.";
-        window.currentLyricId = id;
+
+        const isTTML = item.format === 'ttml';
+        if (isTTML) window.parsedLines = parseTTML(item.lyrics);
+        else window.parsedLines = parseEnhancedLRC(item.lyrics);
+        
+        renderPreview('det-preview');
+
     } catch (err) {
         document.getElementById('det-title').innerText = "Error Loading Lyrics";
         document.getElementById('det-artist').innerText = err.message;
+    }
+}
+
+async function submitVote(voteValue) {
+    if (!window.currentLyricId) return;
+    try {
+        await apiSignedAction(`/${window.currentLyricId}/vote`, { vote: voteValue });
+        showToast("Your vote has been recorded!", "success");
+        const res = await apiFetch(`/${window.currentLyricId}`);
+        const item = res.data;
+        document.getElementById('det-score').innerText = Number(item.score).toFixed(1) || 0;
+        document.getElementById('det-votecount').innerText = `${item.voteCount || 0} votes`;
+    } catch (err) {
+        showToast(`Vote failed: ${err.message}`, "error");
+    }
+}
+
+async function submitReport() {
+    if (!window.currentLyricId) return;
+    const dialog = document.getElementById('report-dialog');
+    const reason = document.getElementById('report-reason').value;
+    const details = document.getElementById('report-details').value;
+
+    if (!reason) return showToast("Please select a reason.", "error");
+
+    try {
+        await apiSignedAction(`/${window.currentLyricId}/report`, { reason, details });
+        showToast("Report submitted successfully. Thank you!", "success");
+        dialog.close();
+        document.getElementById('report-details').value = '';
+    } catch (err) {
+        showToast(`Report failed: ${err.message}`, "error");
     }
 }
 
@@ -309,7 +380,7 @@ function downloadLyrics() {
     if (!window.currentLyricData) return;
     const { lyrics, song, artist, format } = window.currentLyricData;
     const ext = format === 'ttml' ? 'ttml' : (format === 'lrc' ? 'lrc' : 'txt');
-    const filename = `${artist || 'Unknown'} - ${song || 'Unknown'}.${ext}`.replace(/[\\/:*?"<>|]/g, '');
+    const filename = `${artist || 'Unknown'} - ${song || 'Unknown'}.${ext}`.replace(/[\\\\/:*?"<>|]/g, '');
     const blob = new Blob([lyrics], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -370,7 +441,7 @@ function initAccountPage() {
 
 
 // ==========================================
-// --- SUBMIT PAGE: MEDIA & SYNC LOGIC ---
+// --- SUBMIT & DETAIL PAGE: MEDIA & SYNC LOGIC ---
 // ==========================================
 
 const page = {
@@ -380,10 +451,11 @@ const page = {
     activeSource: 'yt',
     syncTimer: null,
 
-    onPlayerReady() {
+    onPlayerReady(event) {
+        ytPlayer = event.target;
         this.isPlayerReady = true;
         if (this.videoIdToLoad) {
-            this.player.loadVideoById(this.videoIdToLoad);
+            ytPlayer.loadVideoById(this.videoIdToLoad);
             this.videoIdToLoad = null;
         }
     },
@@ -401,25 +473,29 @@ const page = {
         document.getElementById('media-error-overlay').classList.add('hidden');
         
         this.stopSyncLoop();
-        if (src === 'file' && this.player && this.player.pauseVideo) this.player.pauseVideo();
-        if (src === 'yt') document.getElementById('local-player').pause();
+        if (src === 'file' && ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+        if (src === 'yt') {
+            const localPlayer = document.getElementById('local-player');
+            if(localPlayer) localPlayer.pause();
+        }
     },
 
     parseYoutubeUrl(url) {
-        const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-        const match = url.match(regExp);
-        const id = (match && match[7].length === 11) ? match[7] : null;
+    // Fixed: Use single backslashes to escape forward slashes and special characters
+    const regExp = /^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    const id = (match && match[7].length === 11) ? match[7] : null;
 
-        if (id) {
-            document.getElementById('sub-vid').value = id;
-            document.getElementById('media-placeholder').classList.add('hidden');
-            document.getElementById('media-error-overlay').classList.add('hidden');
+    if (id) {
+        document.getElementById('sub-vid').value = id;
+        document.getElementById('media-placeholder').classList.add('hidden');
+        document.getElementById('media-error-overlay').classList.add('hidden');
 
-            if (this.isPlayerReady) this.player.loadVideoById(id);
-            else this.videoIdToLoad = id;
+        if (this.isPlayerReady) ytPlayer.loadVideoById(id);
+        else this.videoIdToLoad = id;
 
-            this.fetchYouTubeMetadata(id);
-        }
+        this.fetchYouTubeMetadata(id);
+    }
     },
 
     async fetchYouTubeMetadata(id) {
@@ -430,7 +506,6 @@ const page = {
             
             let title = data.title || "";
             let artist = data.author_name || ""; 
-
 
             const songInput = document.getElementById('sub-song');
             const artistInput = document.getElementById('sub-artist');
@@ -502,10 +577,11 @@ const page = {
         
         this.syncTimer = setInterval(() => {
             let time = 0;
-            if (this.activeSource === 'yt' && this.player?.getPlayerState() === 1) {
-                time = this.player.getCurrentTime();
+            if (this.activeSource === 'yt' && ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === 1) {
+                time = ytPlayer.getCurrentTime();
             } else if (this.activeSource === 'file') {
-                time = document.getElementById('local-player').currentTime;
+                const localPlayer = document.getElementById('local-player');
+                if(localPlayer) time = localPlayer.currentTime;
             }
             
             if (window.parsedLines && time > 0) {
@@ -527,7 +603,7 @@ const page = {
                             
                             if (el) {
                                 el.classList.add('active');
-                                const container = document.getElementById('sync-preview-content');
+                                const container = el.parentElement; // More robust
                                 container.scrollTo({
                                     top: el.offsetTop - (container.clientHeight / 2) + (el.clientHeight / 2),
                                     behavior: 'smooth'
@@ -559,14 +635,17 @@ const page = {
 };
 
 function onYouTubeIframeAPIReady() {
-    page.player = new YT.Player('yt-player', {
+    let playerElementId = 'yt-player';
+    if(!document.getElementById(playerElementId)) return;
+
+    new YT.Player(playerElementId, {
         height: '100%', width: '100%', videoId: '',
         playerVars: { 'origin': window.location.origin, 'modestbranding': 1, 'playsinline': 1 },
         events: {
-            'onReady': () => page.onPlayerReady(),
+            'onReady': (e) => page.onPlayerReady(e),
             'onStateChange': (e) => {
-                if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.CUED) {
-                    const dur = page.player.getDuration();
+                if (e.data === YT.PlayerState.PLAYING && document.body.id === 'page-submit') {
+                    const dur = ytPlayer.getDuration();
                     const durInput = document.getElementById('sub-duration');
                     if (dur && !durInput.value) { durInput.value = Math.floor(dur); }
                 }
@@ -585,7 +664,7 @@ function initSubmitPage() {
     const timeCurr = document.getElementById('time-current');
     const timeTot = document.getElementById('time-total');
 
-    if(!audio) return;
+    if(!audio || !playBtn) return;
 
     playBtn.addEventListener('click', () => {
         if(audio.paused) audio.play();
@@ -624,6 +703,8 @@ function initSubmitPage() {
 }
 
 // --- PARSERS & PREVIEW ENGINE ---
+// --- Replace the PARSERS & PREVIEW ENGINE section and add toggleRawPayload ---
+
 function parseTimestamp(tsStr) {
     if (!tsStr) return 0;
     const parts = tsStr.replace(/[\[\]<>]/g, '').split(':');
@@ -633,27 +714,12 @@ function parseTimestamp(tsStr) {
 
 function parseTTMLTime(tsStr) {
     if (!tsStr) return 0;
-    
-    // Handle raw seconds/milliseconds suffix just in case
     if (tsStr.endsWith('ms')) return parseFloat(tsStr) / 1000;
     if (tsStr.endsWith('s')) return parseFloat(tsStr);
-
-    // Split by colon
     const parts = tsStr.split(':').map(parseFloat);
-
-    // If there are 3 parts it is HH:MM:SS.mmm
-    if (parts.length === 3) {
-        return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
-    } 
-    // If there are 2 parts it is MM:SS.mmm (Which is what you are using)
-    else if (parts.length === 2) {
-        return (parts[0] * 60) + parts[1];
-    } 
-    // If there is 1 part it is just raw seconds SS.mmm
-    else if (parts.length === 1) {
-        return parts[0];
-    }
-
+    if (parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+    else if (parts.length === 2) return (parts[0] * 60) + parts[1];
+    else if (parts.length === 1) return parts[0];
     return 0;
 }
 
@@ -673,37 +739,41 @@ function formatTTMLTime(sec) {
 }
 
 function parseTTML(xmlText) {
-
     if(!xmlText.includes("</tt>")) xmlText += "</div></body></tt>"; 
 
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, "text/xml");
     const pTags = Array.from(xmlDoc.getElementsByTagName("p"));
-    let parsed = [];
+    let parsed =[];
 
     pTags.forEach(p => {
         const start = parseTTMLTime(p.getAttribute("begin"));
         const end = parseTTMLTime(p.getAttribute("end"));
         const agent = p.getAttribute("ttm:agent") || "v1";
-        let words = [];
+        let words =[];
         
         function traverse(node, isBg) {
             if (node.nodeName === 'span') {
                 const nodeBg = isBg || node.getAttribute("ttm:role") === "x-bg";
                 const b = node.getAttribute("begin");
+                const e = node.getAttribute("end");
                 
-                // If it contains direct text mapping
                 if (node.childNodes.length === 1 && node.childNodes[0].nodeType === Node.TEXT_NODE) {
-                    const text = node.textContent.trim();
-                    if (text) {
-                        words.push({ start: parseTTMLTime(b) || start, text: text + " ", isBg: nodeBg });
+                    const text = node.textContent;
+                    if (text.trim()) {
+                        words.push({ 
+                            start: parseTTMLTime(b) || start, 
+                            end: parseTTMLTime(e) || null,
+                            text: text, 
+                            isBg: nodeBg 
+                        });
                     }
                 } else {
                     node.childNodes.forEach(child => traverse(child, nodeBg));
                 }
             } else if (node.nodeType === Node.TEXT_NODE) {
-                const text = node.textContent.trim();
-                if (text) words.push({ start, text: text + " ", isBg });
+                const text = node.textContent;
+                if (text.trim()) words.push({ start, end, text: text, isBg });
             }
         }
 
@@ -722,22 +792,22 @@ function parseTTML(xmlText) {
 
 function parseEnhancedLRC(rawText) {
     const lines = rawText.split('\n');
-    let parsed = [];
+    let parsed =[];
     
     lines.forEach(line => {
-        // Find: [00:00.000]OptionalAgent: Content OR [00:00.000]Content
+        // Skip purely metadata lines unless they match a standard v1: / v2: pattern
+        if (line.match(/^\[[a-zA-Z]+:/) && !line.match(/^\[(v\d+|[A-Za-z0-9_]+):/)) return;
+        
         const matchLine = line.match(/^\[(\d{2}:\d{2}\.\d{2,3})\](?:([A-Za-z0-9_]+):)?(.*)/);
         if (matchLine) {
             const startTime = parseTimestamp(matchLine[1]);
             const agent = matchLine[2] || "v1";
             let content = matchLine[3];
 
-            // Normalize [bg: ] to ( ) to standardize bg vocal tags easily
+            // Normalize Background Vocals [bg: ... ] to ( ... ) for easy looping
             content = content.replace(/\[bg:(.*?)\]/g, '($1)');
 
-            const words = [];
-            
-            // Extract chunks to detect Background Vocals based on () wrapper
+            const words =[];
             let currentChunk = "";
             let isBg = false;
 
@@ -758,13 +828,27 @@ function parseEnhancedLRC(rawText) {
 
             const plainText = content.replace(/<[^>]+>/g, '').replace(/[\(\)]/g, '').trim();
 
-            parsed.push({ start: startTime, text: plainText, words, agent });
+            // Extract real words and use empty timestamped chunks as explicit word boundaries (ends)
+            const validWords =[];
+            for (let i = 0; i < words.length; i++) {
+                const w = words[i];
+                if (w.text.trim() !== '') {
+                    validWords.push(w);
+                } else {
+                    if (validWords.length > 0) validWords[validWords.length - 1].end = w.start;
+                }
+            }
+
+            parsed.push({ start: startTime, text: plainText, words: validWords, agent });
         }
     });
 
     for (let i = 0; i < parsed.length; i++) {
         let e = parsed[i].start + 8;
-        if(parsed[i].words.length > 0) e = parsed[i].words[parsed[i].words.length-1].start + 1.5;
+        if(parsed[i].words.length > 0) {
+            const lastWord = parsed[i].words[parsed[i].words.length-1];
+            e = lastWord.end || (lastWord.start + 1.5);
+        }
         if(parsed[i+1]) e = Math.min(e, parsed[i+1].start);
         parsed[i].end = e;
     }
@@ -772,20 +856,21 @@ function parseEnhancedLRC(rawText) {
 }
 
 function parseChunk(text, isBg, wordsArr, lineStart) {
-    const wordRegex = /<(\d{2}:\d{2}\.\d{2,3})>([^<]+)/g;
+    const tagRegex = /<(\d{2}:\d{2}\.\d{2,3})>([^<]*)/g;
     let match;
     let foundAny = false;
-    while ((match = wordRegex.exec(text)) !== null) {
+    while ((match = tagRegex.exec(text)) !== null) {
         foundAny = true;
-        wordsArr.push({ start: parseTimestamp(match[1]), text: match[2].trim() + " ", isBg });
+        wordsArr.push({ start: parseTimestamp(match[1]), text: match[2], isBg });
     }
     if(!foundAny && text.trim()) {
-        wordsArr.push({ start: lineStart, text: text.trim() + " ", isBg });
+        wordsArr.push({ start: lineStart, text: text, isBg });
     }
 }
 
-function renderPreview() {
-    const container = document.getElementById('sync-preview-content');
+function renderPreview(containerId = 'sync-preview-content') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
     container.innerHTML = '';
     
     if (!window.parsedLines || window.parsedLines.length === 0) {
@@ -824,9 +909,8 @@ function updateSyncPreview() {
     
     const isTTML = text.trim().startsWith('<?xml') || text.trim().startsWith('<tt');
     
-    // Warning system recommending TTML for accuracy (triggers once)
     if (!isTTML && !hasWarnedELRC) {
-        showToast("We highly recommend using TTML Format instead of LRC/ELRC for precise accuracy & Better Lyrics support.", "info");
+        showToast("We highly recommend using TTML Format instead of LRC/ELRC for precise accuracy.", "info");
         hasWarnedELRC = true; 
     }
 
@@ -848,7 +932,7 @@ function handleLyricsFileUpload(event) {
     event.target.value = '';
 }
 
-// --- FORMAT CONVERSIONS (Bidirectional) ---
+// --- FORMAT CONVERSIONS ---
 function convertLyrics(target) {
     const rawText = document.getElementById('sub-lyrics').value;
     if (!rawText.trim()) return showToast("Please paste or upload lyrics first.", "error");
@@ -859,12 +943,11 @@ function convertLyrics(target) {
     if (!window.parsedLines.length) return showToast("Could not extract valid lyric timings.", "error");
 
     if (target === 'ttml') {
-        let xml = `<?xml version="1.0" encoding="utf-8"?>\n<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" xmlns:composer="https://composer.boidu.dev/ttml" ttp:timeBase="media" xml:lang="en" composer:timing="Word">\n  <head>\n    <metadata>\n`;
+        let xml = `<?xml version="1.0" encoding="utf-8"?>\n<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" ttp:timeBase="media" xml:lang="en">\n  <head>\n    <metadata>\n`;
         
-        // Setup default agents dynamically based on content parsed
         let agents = new Set(window.parsedLines.map(l => l.agent || 'v1'));
         agents.forEach(a => {
-            const name = a === 'v1' ? 'Lead' : 'Walker';
+            const name = a === 'v1' ? 'Lead' : `Vocal ${a.replace('v', '')}`;
             xml += `      <ttm:agent xml:id="${a}" type="person"><ttm:name>${name}</ttm:name></ttm:agent>\n`;
         });
         xml += `    </metadata>\n  </head>\n  <body>\n    <div>\n`;
@@ -874,18 +957,18 @@ function convertLyrics(target) {
             if (line.words.length > 0) {
                 let insideBg = false;
                 line.words.forEach((word, i) => {
-                    const wordEnd = (line.words[i+1]) ? line.words[i+1].start : line.end;
-                    const safeText = word.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').trim();
-                    if (!safeText) return; // Skip completely empty tags
+                    const wordEnd = word.end ? word.end : (line.words[i+1] ? line.words[i+1].start : line.end);
+                    const safeText = word.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    if (!safeText.trim() && safeText.length === 0) return;
 
                     if (word.isBg && !insideBg) { xml += `<span ttm:role="x-bg">`; insideBg = true; }
                     if (!word.isBg && insideBg) { xml += `</span>`; insideBg = false; }
                     
-                    xml += `<span begin="${formatTTMLTime(word.start)}" end="${formatTTMLTime(wordEnd)}">${safeText}</span> `;
+                    xml += `<span begin="${formatTTMLTime(word.start)}" end="${formatTTMLTime(wordEnd)}">${safeText}</span>`;
                 });
                 if (insideBg) xml += `</span>`;
             } else {
-                xml += line.text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+                xml += line.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             }
             xml += `</p>\n`;
         });
@@ -905,13 +988,14 @@ function convertLyrics(target) {
             if (line.words.length > 0) {
                 let insideBg = false;
                 line.words.forEach((w) => {
-                    if (w.isBg && !insideBg) { elrcStr += "("; insideBg = true; }
-                    if (!w.isBg && insideBg) { elrcStr += ") "; insideBg = false; }
+                    if (w.isBg && !insideBg) { elrcStr += "[bg:"; insideBg = true; }
+                    if (!w.isBg && insideBg) { elrcStr += "]"; insideBg = false; }
                     
-                    const safeText = w.text.trim();
-                    if(safeText) elrcStr += `<${formatELRCTime(w.start)}>${safeText} `;
+                    const safeText = w.text;
+                    const endTs = w.end ? `<${formatELRCTime(w.end)}>` : '';
+                    elrcStr += `<${formatELRCTime(w.start)}>${safeText}${endTs}`;
                 });
-                if(insideBg) elrcStr += ")";
+                if(insideBg) elrcStr += "]";
             } else {
                 elrcStr += line.text;
             }
@@ -923,6 +1007,19 @@ function convertLyrics(target) {
     }
 
     updateSyncPreview();
+}
+
+// Collapsible function for UI elements
+window.toggleRawPayload = function() {
+    const body = document.getElementById('raw-payload-body');
+    const icon = document.getElementById('raw-toggle-icon');
+    if (body.classList.contains('hidden')) {
+        body.classList.remove('hidden');
+        icon.innerText = 'expand_less';
+    } else {
+        body.classList.add('hidden');
+        icon.innerText = 'expand_more';
+    }
 }
 
 async function submitLyricsForm() {

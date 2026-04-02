@@ -48,7 +48,7 @@
             </div>
 
             <!-- Enhanced Action Bar -->
-            <div class="action-bar">
+            <div class="action-bar" style="margin-bottom: 24px;">
                 <button class="btn" onclick="submitVote(1)">
                     <span class="material-symbols-rounded">thumb_up</span> Upvote
                 </button>
@@ -63,42 +63,60 @@
                 </button>
             </div>
 
-            <!-- Content Area (Side-by-side Desktop, Stacked Mobile) -->
-            <div class="content-grid">
-                
-                <!-- Preview Panel -->
-                <div class="panel scrollable-panel">
-                    <div class="panel-header flex-between">
-                        <label class="section-label" style="margin: 0;">Parsed Preview</label>
+            <!-- Side-by-Side Player and Preview -->
+            <div class="content-grid split-view">
+                <!-- Player on the Left -->
+                <div class="media-container panel" style="padding: 0; border: none;">
+                    <div id="yt-player-container">
+                        <div id="yt-player"></div>
+                    </div>
+                    <div id="media-placeholder" class="text-muted flex-center">
+                        <span class="material-symbols-rounded spinner" style="font-size: 48px; margin-bottom: 8px;">hourglass_empty</span>
+                        Loading Media...
+                    </div>
+                    <div id="media-error-overlay" class="hidden">
+                        <span class="material-symbols-rounded" style="font-size: 48px; color: var(--danger)">error</span>
+                        <h4 style="margin-top: 16px;">Video Unavailable</h4>
+                        <p class="text-secondary" style="font-size: 0.9rem; margin-top: 8px;">The creator may have disabled embedding for this video.</p>
+                    </div>
+                </div>
+
+                <!-- Preview Panel on the Right -->
+                <div class="panel scrollable-panel" style="padding: 0;">
+                    <div class="panel-header flex-between" style="border-bottom: 1px solid var(--border-color);">
+                        <label class="section-label" style="margin: 0;">Synced Preview</label>
                         <span class="material-symbols-rounded text-muted">visibility</span>
                     </div>
-                    <div class="panel-body">
-                        <div id="det-preview"></div>
+                    <div id="det-preview" class="panel-body">
+                        <div class="empty-state text-muted">Loading preview...</div>
                     </div>
                 </div>
-
-                <!-- Raw Panel -->
-                <div class="panel scrollable-panel">
-                    <div class="panel-header flex-between">
-                        <label class="section-label" style="margin: 0;">Raw Payload</label>
-                        <button class="btn btn-small" onclick="copyRawLyrics()">
-                            <span class="material-symbols-rounded" style="font-size: 16px;">content_copy</span> Copy Raw
-                        </button>
-                    </div>
-                    <div class="panel-body">
-                        <div id="det-raw"></div>
-                    </div>
-                </div>
-
             </div>
+
+            <!-- Collapsible Raw Payload -->
+            <div class="panel" style="padding: 0; border-radius: var(--radius-md); overflow: hidden; margin-top: 24px;">
+                <div class="panel-header flex-between" style="cursor: pointer; padding: 16px 24px; transition: background 0.2s;" onclick="toggleRawPayload()">
+                    <label class="section-label" style="margin: 0; pointer-events: none; color: var(--text-primary); font-size: 0.85rem;">Raw Payload</label>
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <button class="btn btn-small" onclick="event.stopPropagation(); copyRawLyrics()">
+                            <span class="material-symbols-rounded" style="font-size: 16px;">content_copy</span> Copy
+                        </button>
+                        <span id="raw-toggle-icon" class="material-symbols-rounded text-muted">expand_more</span>
+                    </div>
+                </div>
+                <div id="raw-payload-body" class="panel-body hidden" style="border-top: 1px solid var(--border-color); padding: 24px;">
+                    <pre id="det-raw"></pre>
+                </div>
+            </div>
+
         </div>
     </main>
 
     <!-- Report Dialog -->
     <dialog id="report-dialog">
+        <!-- Kept exactly the same -->
         <h3 style="margin-bottom: 16px; font-size: 1.5rem; letter-spacing: -0.02em;">Report Lyrics</h3>
         <p class="text-secondary mb-3" style="font-size: 0.9rem;">Help us keep Unison accurate by reporting incorrect or malicious uploads.</p>
-        
         <div class="form-group">
             <label>Reason for report</label>
             <select id="report-reason" class="input-element">
@@ -119,16 +137,8 @@
         </div>
     </dialog>
 
-    <!-- Toast Notification Container -->
     <div id="toast-container"></div>
-
-    <footer class="app-footer">
-        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
-            Made by Walker
-            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
-        </div>
-    </footer>
-
     <script src="app.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Lyrics | Unison</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- JS Media Tags for Audio ID3 Parsing (Cover Art & Info) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 </head>
 <body id="page-submit">
@@ -70,7 +69,8 @@
                                     <span class="material-symbols-rounded" style="font-size: 16px;">upload</span> Upload
                                 </button>
                                 <input type="file" id="lyrics-file-input" class="hidden" accept=".lrc,.elrc,.txt,.ttml" onchange="handleLyricsFileUpload(event)">
-                                <button class="btn btn-small" onclick="convertLyrics('ttml')">Convert to TTML</button>
+                                <button class="btn btn-small" onclick="convertLyrics('ttml')">To TTML</button>
+                                <button class="btn btn-small" onclick="convertLyrics('elrc')">To ELRC</button>
                             </div>
                         </div>
                         <textarea id="sub-lyrics" rows="10" class="input-element" placeholder="[00:12.00] Paste lyrics here..." oninput="updateSyncPreview()"></textarea>
