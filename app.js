@@ -725,49 +725,79 @@ function parseEnhancedLRC(rawText) {
     let parsed = [];
     
     lines.forEach(line => {
-        // Find: [00:00.000]OptionalAgent: Content OR [00:00.000]Content
+        // Matches [00:00.000]Agent: Text OR [00:00.000]Text
         const matchLine = line.match(/^\[(\d{2}:\d{2}\.\d{2,3})\](?:([A-Za-z0-9_]+):)?(.*)/);
         if (matchLine) {
             const startTime = parseTimestamp(matchLine[1]);
             const agent = matchLine[2] || "v1";
             let content = matchLine[3];
 
-            // Normalize [bg: ] to ( ) to standardize bg vocal tags easily
-            content = content.replace(/\[bg:(.*?)\]/g, '($1)');
-
             const words = [];
-            
-            // Extract chunks to detect Background Vocals based on () wrapper
-            let currentChunk = "";
-            let isBg = false;
+            let currentWord = null;
+            let bgDepth = 0;
 
-            for(let i=0; i<content.length; i++) {
-                if(content[i] === '(') {
-                    if(currentChunk) parseChunk(currentChunk, false, words, startTime);
-                    currentChunk = "";
-                    isBg = true;
-                } else if (content[i] === ')') {
-                    if(currentChunk) parseChunk(currentChunk, true, words, startTime);
-                    currentChunk = "";
-                    isBg = false;
-                } else {
-                    currentChunk += content[i];
+            // Tokenizer: Splits into <Time>, [bg:, ], (, ), or raw text
+            const tokenRegex = /(<[^>]+>)|(\[bg:)|(\])|(\()|(\))|([^<\[\]()]+)/g;
+            let match;
+
+            while ((match = tokenRegex.exec(content)) !== null) {
+                if (match[1]) { // Timestamp e.g., <00:25.723>
+                    let time = parseTimestamp(match[1]);
+                    if (currentWord) {
+                        currentWord.end = time;
+                        if (currentWord.text.trim()) words.push(currentWord);
+                    }
+                    // Start a new word tracking the timestamp
+                    currentWord = { start: time, text: "", isBg: bgDepth > 0 };
+                    
+                } else if (match[2]) { // Start [bg:
+                    bgDepth++;
+                    if (currentWord) currentWord.isBg = true;
+                } else if (match[3]) { // End ]
+                    bgDepth = Math.max(0, bgDepth - 1);
+                } else if (match[4]) { // Start (
+                    bgDepth++;
+                    if (!currentWord) currentWord = { start: startTime, text: "", isBg: true };
+                    currentWord.text += "(";
+                    currentWord.isBg = true;
+                } else if (match[5]) { // End )
+                    if (!currentWord) currentWord = { start: startTime, text: "", isBg: bgDepth > 0 };
+                    currentWord.text += ")";
+                    bgDepth = Math.max(0, bgDepth - 1);
+                } else if (match[6]) { // Standard Text
+                    if (!currentWord) currentWord = { start: startTime, text: "", isBg: bgDepth > 0 };
+                    currentWord.text += match[6];
                 }
             }
-            if(currentChunk) parseChunk(currentChunk, isBg, words, startTime);
+            
+            // Push the final trailing word if it exists
+            if (currentWord && currentWord.text.trim()) {
+                words.push(currentWord);
+            }
 
-            const plainText = content.replace(/<[^>]+>/g, '').replace(/[\(\)]/g, '').trim();
+            // Fallback word end times if trailing timestamps are missing
+            for(let j = 0; j < words.length; j++) {
+                if (!words[j].end) {
+                    if (words[j+1]) words[j].end = words[j+1].start;
+                    else words[j].end = words[j].start + 1.5;
+                }
+            }
 
+            const plainText = content.replace(/<[^>]+>/g, '').replace(/\[bg:/g, '').replace(/\]/g, '').trim();
             parsed.push({ start: startTime, text: plainText, words, agent });
         }
     });
 
+    // Compute Line End Times for the outer <p> tags
     for (let i = 0; i < parsed.length; i++) {
-        let e = parsed[i].start + 8;
-        if(parsed[i].words.length > 0) e = parsed[i].words[parsed[i].words.length-1].start + 1.5;
-        if(parsed[i+1]) e = Math.min(e, parsed[i+1].start);
-        parsed[i].end = e;
+        let lineEnd = parsed[i].start + 8;
+        if (parsed[i].words.length > 0) {
+            lineEnd = parsed[i].words[parsed[i].words.length-1].end;
+        }
+        if (parsed[i+1]) lineEnd = Math.min(lineEnd, parsed[i+1].start);
+        parsed[i].end = lineEnd;
     }
+    
     return parsed;
 }
 
@@ -861,7 +891,6 @@ function convertLyrics(target) {
     if (target === 'ttml') {
         let xml = `<?xml version="1.0" encoding="utf-8"?>\n<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" xmlns:composer="https://composer.boidu.dev/ttml" ttp:timeBase="media" xml:lang="en" composer:timing="Word">\n  <head>\n    <metadata>\n`;
         
-        // Setup default agents dynamically based on content parsed
         let agents = new Set(window.parsedLines.map(l => l.agent || 'v1'));
         agents.forEach(a => {
             const name = a === 'v1' ? 'Lead' : 'Walker';
@@ -871,12 +900,16 @@ function convertLyrics(target) {
 
         window.parsedLines.forEach(line => {
             xml += `      <p begin="${formatTTMLTime(line.start)}" end="${formatTTMLTime(line.end)}" ttm:agent="${line.agent || 'v1'}">`;
+            
             if (line.words.length > 0) {
                 let insideBg = false;
-                line.words.forEach((word, i) => {
-                    const wordEnd = (line.words[i+1]) ? line.words[i+1].start : line.end;
+                line.words.forEach((word) => {
+                    // Use the calculated exact end time
+                    const wordEnd = word.end;
                     const safeText = word.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').trim();
-                    if (!safeText) return; // Skip completely empty tags
+                    
+                    // Skip empty tags that contain absolutely no text
+                    if (!safeText) return; 
 
                     if (word.isBg && !insideBg) { xml += `<span ttm:role="x-bg">`; insideBg = true; }
                     if (!word.isBg && insideBg) { xml += `</span>`; insideBg = false; }
@@ -893,6 +926,7 @@ function convertLyrics(target) {
         xml += `    </div>\n  </body>\n</tt>`;
         document.getElementById('sub-lyrics').value = xml;
         showToast("Converted to standard TTML Format!", "success");
+    }
 
     } else if (target === 'elrc') {
         let elrcStr = "";
