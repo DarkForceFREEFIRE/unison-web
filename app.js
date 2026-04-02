@@ -570,10 +570,10 @@ const page = {
     },
 
     startSyncLoop() {
-        if (this.syncTimer) clearInterval(this.syncTimer);
+        this.stopSyncLoop();
         window.currentActiveLineIndex = -1; 
         
-        this.syncTimer = setInterval(() => {
+        const sync = () => {
             let time = 0;
             if (this.activeSource === 'yt' && ytPlayer && typeof ytPlayer.getPlayerState === 'function' && ytPlayer.getPlayerState() === 1) {
                 time = ytPlayer.getCurrentTime();
@@ -601,7 +601,7 @@ const page = {
                             
                             if (el) {
                                 el.classList.add('active');
-                                const container = el.parentElement; // More robust
+                                const container = el.parentElement;
                                 container.scrollTo({
                                     top: el.offsetTop - (container.clientHeight / 2) + (el.clientHeight / 2),
                                     behavior: 'smooth'
@@ -613,7 +613,13 @@ const page = {
                         if (line.words?.length) {
                             line.words.forEach((w, wi) => {
                                 const wSpan = document.getElementById(`word-${activeIndex}-${wi}`);
-                                if (wSpan) wSpan.classList.toggle('active', time >= w.start);
+                                if (wSpan) {
+                                    const shouldBeActive = time >= w.start;
+                                    // Optimization: Only update the DOM if the state actually needs to change
+                                    if (wSpan.classList.contains('active') !== shouldBeActive) {
+                                        wSpan.classList.toggle('active', shouldBeActive);
+                                    }
+                                }
                             });
                         }
                     } else {
@@ -624,11 +630,19 @@ const page = {
                     }
                 }
             }
-        }, 50);
+            // Request the next frame
+            this.syncTimer = requestAnimationFrame(sync);
+        };
+
+        // Kick off the loop
+        this.syncTimer = requestAnimationFrame(sync);
     },
     
     stopSyncLoop() {
-        if (this.syncTimer) clearInterval(this.syncTimer);
+        if (this.syncTimer) {
+            cancelAnimationFrame(this.syncTimer);
+            this.syncTimer = null;
+        }
     }
 };
 
