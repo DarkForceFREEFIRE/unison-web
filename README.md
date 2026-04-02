@@ -11,8 +11,9 @@ Made with ❤️ by Walker 🇱🇰
 - Convert ELRC format to TTML format
 - Upvote/Downvote and Report functions
 - Search function
-- Download function
+- lyrics download function
 
 
-<img width="1224" height="695" alt="Picture1" src="https://github.com/user-attachments/assets/e861827e-bb63-49f9-a52b-63b176e9ab0e" />
+<img width="4354" height="2483" alt="Picture2" src="https://github.com/user-attachments/assets/7e420be2-8486-44a1-9579-d1e44f973963" />
 
+![Picture3](https://github.com/user-attachments/assets/60a01e3f-be33-4f8f-a017-660b3915d918)
