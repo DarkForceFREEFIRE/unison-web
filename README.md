@@ -15,4 +15,5 @@ Made with ❤️ by Walker 🇱🇰
 - View synced lyrics in both submit and detail page
 
 
-<img width="4354" height="2483" alt="Picture2" src="https://github.com/user-attachments/assets/7e420be2-8486-44a1-9579-d1e44f973963" />
+<img width="4374" height="2483" alt="BR" src="https://github.com/user-attachments/assets/af0e6446-946c-477e-830e-0143152b229b" />
+
