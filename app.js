@@ -335,10 +335,19 @@ function initAccountPage() {
     document.getElementById('acc-name').innerText = user.displayName || 'Unknown User';
     
     const privateDetails = document.getElementById('private-details');
+    // Get the new warning panel
+    const publicWarning = document.getElementById('public-account-warning');
+
+    // Check if the current user is the public user
     if (user.keyId === DEFAULT_IDENTITY.keyId) {
+        // Public Account Mode: Hide private details and show the warning
         privateDetails.style.display = 'none';
+        if (publicWarning) publicWarning.style.display = 'block';
     } else {
+        // Real Account Mode: Show private details and hide the warning
+        if (publicWarning) publicWarning.style.display = 'none';
         privateDetails.style.display = 'block';
+        
         let displayKey = user.keyId;
         if (displayKey.length > 50) displayKey = displayKey.substring(0, 50) + '...';
         document.getElementById('acc-key').innerText = displayKey;
@@ -367,7 +376,6 @@ function initAccountPage() {
         themeBtn.innerHTML = newTheme === 'dark' ? '<span class="material-symbols-rounded">light_mode</span> Switch to Light Mode' : '<span class="material-symbols-rounded">dark_mode</span> Switch to Dark Mode';
     });
 }
-
 
 // ==========================================
 // --- SUBMIT PAGE: MEDIA & SYNC LOGIC ---
