@@ -18,9 +18,8 @@ const DEFAULT_IDENTITY = {
 let ytPlayer = null;
 window.parsedLines = [];
 window.currentActiveLineIndex = -1;
-let hasWarnedELRC = false; // Used to prevent spamming warnings
+let hasWarnedELRC = false; 
 
-// --- UTILS & TOASTS ---
 function formatPlayerTime(seconds) {
     if (isNaN(seconds)) return "0:00";
     const m = Math.floor(seconds / 60);
@@ -126,23 +125,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!user && !isLoginPage) { window.location.href = 'login.html'; return; }
     if (user && isLoginPage) { window.location.href = 'index.html'; return; }
 
-    // --- FIX: Global Search Bar Event Listener ---
+    
     const searchInput = document.getElementById('global-search');
     if (searchInput) {
-        // Pre-fill search bar if there is an active query in the URL
+        
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('q')) {
             searchInput.value = urlParams.get('q');
         }
 
-        // Trigger search on "Enter" key press
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const query = searchInput.value.trim();
                 if (query) {
                     window.location.href = `index.html?q=${encodeURIComponent(query)}`;
                 } else {
-                    window.location.href = `index.html`; // Go back to default home if cleared
+                    window.location.href = `index.html`;
                 }
             }
         });
@@ -702,9 +700,7 @@ function initSubmitPage() {
     });
 }
 
-// --- PARSERS & PREVIEW ENGINE ---
-// --- Replace the PARSERS & PREVIEW ENGINE section and add toggleRawPayload ---
-
+/// --- PARSERS & PREVIEW ENGINE ---
 function parseTimestamp(tsStr) {
     if (!tsStr) return 0;
     const parts = tsStr.replace(/[\[\]<>]/g, '').split(':');
@@ -755,12 +751,14 @@ function parseTTML(xmlText) {
         function traverse(node, isBg) {
             if (node.nodeName === 'span') {
                 const nodeBg = isBg || node.getAttribute("ttm:role") === "x-bg";
-                const b = node.getAttribute("begin");
-                const e = node.getAttribute("end");
+                const hasChildSpans = Array.from(node.childNodes).some(n => n.nodeName === 'span');
                 
-                if (node.childNodes.length === 1 && node.childNodes[0].nodeType === Node.TEXT_NODE) {
+                if (!hasChildSpans) {
+                    const b = node.getAttribute("begin");
+                    const e = node.getAttribute("end");
                     const text = node.textContent;
-                    if (text.trim()) {
+                    
+                    if (text.trim() !== '') {
                         words.push({ 
                             start: parseTTMLTime(b) || start, 
                             end: parseTTMLTime(e) || null,
@@ -773,17 +771,24 @@ function parseTTML(xmlText) {
                 }
             } else if (node.nodeType === Node.TEXT_NODE) {
                 const text = node.textContent;
-                if (text.trim()) words.push({ start, end, text: text, isBg });
+                // Capture spacing that sits directly between span tags
+                if (!text.trim() && text.length > 0 && words.length > 0) {
+                    let lastWord = words[words.length - 1];
+                    if (!lastWord.text.endsWith(' ')) lastWord.text += ' ';
+                } else if (text.trim()) {
+                    words.push({ start, end, text: text, isBg });
+                }
             }
         }
 
         Array.from(p.childNodes).forEach(n => traverse(n, false));
+        const lineText = words.map(w => w.text).join('').trim();
 
         parsed.push({ 
             start, 
             end: end || (words.length ? words[words.length-1].start + 2 : start + 5), 
             agent,
-            text: p.textContent.trim().replace(/\s+/g, ' '), 
+            text: lineText || p.textContent.trim().replace(/\s+/g, ' '), 
             words 
         });
     });
@@ -795,16 +800,13 @@ function parseEnhancedLRC(rawText) {
     let parsed =[];
     
     lines.forEach(line => {
-        // Skip purely metadata lines unless they match a standard v1: / v2: pattern
         if (line.match(/^\[[a-zA-Z]+:/) && !line.match(/^\[(v\d+|[A-Za-z0-9_]+):/)) return;
-        
         const matchLine = line.match(/^\[(\d{2}:\d{2}\.\d{2,3})\](?:([A-Za-z0-9_]+):)?(.*)/);
+        
         if (matchLine) {
             const startTime = parseTimestamp(matchLine[1]);
             const agent = matchLine[2] || "v1";
             let content = matchLine[3];
-
-            // Normalize Background Vocals [bg: ... ] to ( ... ) for easy looping
             content = content.replace(/\[bg:(.*?)\]/g, '($1)');
 
             const words =[];
@@ -827,16 +829,12 @@ function parseEnhancedLRC(rawText) {
             if(currentChunk) parseChunk(currentChunk, isBg, words, startTime);
 
             const plainText = content.replace(/<[^>]+>/g, '').replace(/[\(\)]/g, '').trim();
-
-            // Extract real words and use empty timestamped chunks as explicit word boundaries (ends)
             const validWords =[];
+            
             for (let i = 0; i < words.length; i++) {
                 const w = words[i];
-                if (w.text.trim() !== '') {
-                    validWords.push(w);
-                } else {
-                    if (validWords.length > 0) validWords[validWords.length - 1].end = w.start;
-                }
+                if (w.text.trim() !== '') validWords.push(w);
+                else if (validWords.length > 0) validWords[validWords.length - 1].end = w.start;
             }
 
             parsed.push({ start: startTime, text: plainText, words: validWords, agent });
@@ -863,9 +861,7 @@ function parseChunk(text, isBg, wordsArr, lineStart) {
         foundAny = true;
         wordsArr.push({ start: parseTimestamp(match[1]), text: match[2], isBg });
     }
-    if(!foundAny && text.trim()) {
-        wordsArr.push({ start: lineStart, text: text, isBg });
-    }
+    if(!foundAny && text.trim()) wordsArr.push({ start: lineStart, text: text, isBg });
 }
 
 function renderPreview(containerId = 'sync-preview-content') {
@@ -908,15 +904,12 @@ function updateSyncPreview() {
     }
     
     const isTTML = text.trim().startsWith('<?xml') || text.trim().startsWith('<tt');
-    
     if (!isTTML && !hasWarnedELRC) {
         showToast("We highly recommend using TTML Format instead of LRC/ELRC for precise accuracy.", "info");
         hasWarnedELRC = true; 
     }
 
-    if (isTTML) window.parsedLines = parseTTML(text);
-    else window.parsedLines = parseEnhancedLRC(text);
-    
+    window.parsedLines = isTTML ? parseTTML(text) : parseEnhancedLRC(text);
     renderPreview();
 }
 
@@ -932,16 +925,8 @@ function handleLyricsFileUpload(event) {
     event.target.value = '';
 }
 
-// --- FORMAT CONVERSIONS ---
-function convertLyrics(target) {
-    const rawText = document.getElementById('sub-lyrics').value;
-    if (!rawText.trim()) return showToast("Please paste or upload lyrics first.", "error");
-
-    const isCurrentTTML = rawText.trim().startsWith('<?xml') || rawText.trim().startsWith('<tt');
-    window.parsedLines = isCurrentTTML ? parseTTML(rawText) : parseEnhancedLRC(rawText);
-
-    if (!window.parsedLines.length) return showToast("Could not extract valid lyric timings.", "error");
-
+// --- FORMAT CONVERSIONS & FIXES ---
+function generatePayloadFromParsed(target) {
     if (target === 'ttml') {
         let xml = `<?xml version="1.0" encoding="utf-8"?>\n<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" ttp:timeBase="media" xml:lang="en">\n  <head>\n    <metadata>\n`;
         
@@ -975,8 +960,6 @@ function convertLyrics(target) {
 
         xml += `    </div>\n  </body>\n</tt>`;
         document.getElementById('sub-lyrics').value = xml;
-        showToast("Converted to standard TTML Format!", "success");
-
     } else if (target === 'elrc') {
         let elrcStr = "";
         window.parsedLines.forEach(line => {
@@ -1001,12 +984,56 @@ function convertLyrics(target) {
             }
             elrcStr += "\n";
         });
-        
         document.getElementById('sub-lyrics').value = elrcStr.trim();
-        showToast("Converted to standard ELRC Format!", "success");
     }
-
     updateSyncPreview();
+}
+
+function convertLyrics(target) {
+    const rawText = document.getElementById('sub-lyrics').value;
+    if (!rawText.trim()) return showToast("Please paste or upload lyrics first.", "error");
+
+    const isCurrentTTML = rawText.trim().startsWith('<?xml') || rawText.trim().startsWith('<tt');
+    window.parsedLines = isCurrentTTML ? parseTTML(rawText) : parseEnhancedLRC(rawText);
+
+    if (!window.parsedLines.length) return showToast("Could not extract valid lyric timings.", "error");
+    
+    generatePayloadFromParsed(target);
+    showToast(`Converted to standard ${target.toUpperCase()} Format!`, "success");
+}
+
+window.fixLyricsFormatting = function() {
+    const rawText = document.getElementById('sub-lyrics').value;
+    if (!rawText.trim()) return showToast("Please paste or upload lyrics first.", "error");
+
+    const isTTML = rawText.trim().startsWith('<?xml') || rawText.trim().startsWith('<tt');
+    window.parsedLines = isTTML ? parseTTML(rawText) : parseEnhancedLRC(rawText);
+
+    if (!window.parsedLines || !window.parsedLines.length) return showToast("No parsed lyrics to fix.", "error");
+
+    let fixedCount = 0;
+    window.parsedLines.forEach(line => {
+        if (line.words && line.words.length > 0) {
+            for (let i = 0; i < line.words.length; i++) {
+                let w = line.words[i];
+                w.text = w.text.trim();
+                // Add a trailing space to every word except the final one
+                if (i < line.words.length - 1) w.text += ' ';
+            }
+            const newText = line.words.map(w => w.text).join('');
+            if (line.text !== newText.trim()) {
+                fixedCount++;
+                line.text = newText.trim();
+            }
+        }
+    });
+
+    if (fixedCount > 0) {
+        generatePayloadFromParsed(isTTML ? 'ttml' : 'elrc');
+        showToast(`Formatting fixed! Adjusted spacing on ${fixedCount} lines.`, "success");
+    } else {
+        showToast("Formatting is already perfect! No missing spaces found.", "info");
+    }
 }
 
 // Collapsible function for UI elements

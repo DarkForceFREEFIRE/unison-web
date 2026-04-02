@@ -62,19 +62,24 @@
                     </div>
 
                     <div class="form-group mt-2">
-                        <div class="flex-between" style="margin-bottom: 8px;">
-                            <label style="margin:0;">Lyrics Payload *</label>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-small" onclick="document.getElementById('lyrics-file-input').click()">
-                                    <span class="material-symbols-rounded" style="font-size: 16px;">upload</span> Upload
-                                </button>
-                                <input type="file" id="lyrics-file-input" class="hidden" accept=".lrc,.elrc,.txt,.ttml" onchange="handleLyricsFileUpload(event)">
-                                <button class="btn btn-small" onclick="convertLyrics('ttml')">To TTML</button>
-                                <button class="btn btn-small" onclick="convertLyrics('elrc')">To ELRC</button>
-                            </div>
-                        </div>
-                        <textarea id="sub-lyrics" rows="10" class="input-element" placeholder="[00:12.00] Paste lyrics here..." oninput="updateSyncPreview()"></textarea>
-                    </div>
+    <div class="flex-between" style="margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+        <label style="margin:0;">Lyrics Payload *</label>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-small" onclick="document.getElementById('lyrics-file-input').click()">
+                <span class="material-symbols-rounded" style="font-size: 16px;">upload</span> Upload
+            </button>
+            <input type="file" id="lyrics-file-input" class="hidden" accept=".lrc,.elrc,.txt,.ttml" onchange="handleLyricsFileUpload(event)">
+            
+            <button class="btn btn-small" onclick="fixLyricsFormatting()" title="Fixes missing spacing between words automatically">
+                <span class="material-symbols-rounded" style="font-size: 16px;">auto_fix_high</span> Auto-Fix Spacing
+            </button>
+            
+            <button class="btn btn-small" onclick="convertLyrics('ttml')">To TTML</button>
+            <button class="btn btn-small" onclick="convertLyrics('elrc')">To ELRC</button>
+        </div>
+    </div>
+    <textarea id="sub-lyrics" rows="10" class="input-element" placeholder="[00:12.00] Paste lyrics here..." oninput="updateSyncPreview()"></textarea>
+</div>
 
                     <button class="btn btn-primary btn-full mt-2" id="submit-btn" onclick="submitLyricsForm()">
                         <span class="material-symbols-rounded">publish</span> Publish to Unison
