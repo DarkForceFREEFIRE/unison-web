@@ -15,7 +15,49 @@ const DEFAULT_IDENTITY = {
     "displayName": "MysticSnareRise"
 };
 
-// --- Crypto & Signatures ---
+let ytPlayer = null;
+window.parsedLines = [];
+window.currentActiveLineIndex = -1;
+let hasWarnedELRC = false; // Used to prevent spamming warnings
+
+// --- UTILS & TOASTS ---
+function formatPlayerTime(seconds) {
+    if (isNaN(seconds)) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return; 
+    const toast = document.createElement('div');
+    
+    let icon = 'info';
+    if(type === 'success') icon = 'check_circle';
+    if(type === 'error') icon = 'error';
+
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span class="material-symbols-rounded" style="font-size: 24px;">${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('hide');
+        toast.addEventListener('animationend', () => toast.remove());
+    }, 4500);
+}
+
+window.alert = function(message) {
+    if (typeof message !== 'string') message = String(message);
+    const msgLower = message.toLowerCase();
+    if (msgLower.includes('failed') || msgLower.includes('error') || msgLower.includes('please')) {
+        showToast(message, 'error');
+    } else {
+        showToast(message, 'success');
+    }
+};
+
+// --- CRYPTO & API ---
 function canonicalJson(obj) {
     if (obj === null || obj === undefined) return 'null';
     if (typeof obj === 'boolean') return obj ? 'true' : 'false';
@@ -42,7 +84,6 @@ async function signPayload(privateKeyJwk, payloadObj) {
     return arrayBufferToBase64(signatureBuffer);
 }
 
-// --- API Helpers ---
 async function apiFetch(endpoint, options = {}) {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, options);
     const isJson = res.headers.get("content-type")?.includes("application/json");
@@ -74,66 +115,18 @@ async function apiSignedAction(endpoint, payloadData) {
     });
 }
 
-// --- Dynamic Time/Greeting Updates ---
-function updateGreetingTime() {
-    const greetingEl = document.getElementById('greeting-text');
-    const timeEl = document.getElementById('time-text');
-    if (!greetingEl || !timeEl) return;
-    
-    const user = JSON.parse(localStorage.getItem('unisonIdentity'));
-    const name = user?.displayName || 'User'; 
-    
-    const now = new Date();
-    const hours = now.getHours();
-    let greeting = 'Good Evening';
-    if (hours < 12) greeting = 'Good Morning';
-    else if (hours < 18) greeting = 'Good Afternoon';
-    
-    greetingEl.innerText = `${greeting}, ${name}`;
-    timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · ' + now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-}
-
-// --- App Initialization & Auth Guard ---
+// --- AUTH / GLOBAL ROUTING ---
 document.addEventListener("DOMContentLoaded", () => {
-    // Apply Theme
     const theme = localStorage.getItem('unisonTheme') || 'dark';
     document.documentElement.setAttribute('data-theme', theme);
 
     const isLoginPage = window.location.pathname.includes('login.html');
     const user = JSON.parse(localStorage.getItem('unisonIdentity'));
 
-    // Auth Redirects
-    if (!user && !isLoginPage) {
-        window.location.href = 'login.html';
-        return;
-    }
-    if (user && isLoginPage) {
-        window.location.href = 'index.html';
-        return;
-    }
+    if (!user && !isLoginPage) { window.location.href = 'login.html'; return; }
+    if (user && isLoginPage) { window.location.href = 'index.html'; return; }
 
-    // Nav Active States
     const pageId = document.body.id;
-    const navSearch = document.getElementById('nav-search');
-    const navSubmissions = document.getElementById('nav-submissions');
-    if (pageId === 'page-search' && navSearch) navSearch.classList.add('active');
-    if (pageId === 'page-submissions' && navSubmissions) navSubmissions.classList.add('active');
-
-    // Global Search Binding
-    const searchInput = document.getElementById('global-search');
-    if (searchInput) {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('q')) searchInput.value = urlParams.get('q');
-
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const q = e.target.value.trim();
-                window.location.href = q ? `index.html?q=${encodeURIComponent(q)}` : 'index.html';
-            }
-        });
-    }
-
-    // Route Initializers
     if (pageId === 'page-search') {
         initSearchPage();
         setInterval(updateGreetingTime, 1000);
@@ -145,7 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (pageId === 'page-account') initAccountPage();
 });
 
-// --- Login Handlers ---
 function loginDefault() {
     localStorage.setItem('unisonIdentity', JSON.stringify(DEFAULT_IDENTITY));
     window.location.href = 'index.html';
@@ -171,9 +163,24 @@ function logout() {
     window.location.href = 'login.html';
 }
 
-// --- Pages Logic ---
+function updateGreetingTime() {
+    const greetingEl = document.getElementById('greeting-text');
+    const timeEl = document.getElementById('time-text');
+    if (!greetingEl || !timeEl) return;
+    
+    const user = JSON.parse(localStorage.getItem('unisonIdentity'));
+    const name = user?.displayName || 'User'; 
+    const now = new Date();
+    const hours = now.getHours();
+    let greeting = 'Good Evening';
+    if (hours < 12) greeting = 'Good Morning';
+    else if (hours < 18) greeting = 'Good Afternoon';
+    
+    greetingEl.innerText = `${greeting}, ${name}`;
+    timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · ' + now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+}
 
-/* 1. Search / Home Page */
+// --- SEARCH & SUBMISSIONS PAGES ---
 async function initSearchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q');
@@ -191,9 +198,8 @@ async function initSearchPage() {
 
     defaultView.style.display = 'none';
     searchView.style.display = 'block';
-
     headerTitle.innerText = `Search Results for "${query}"`;
-    resultsDiv.innerHTML = `<div class="empty-state text-secondary animate-fade-up"><span class="material-symbols-rounded spinner" style="vertical-align: middle; margin-right:8px;">sync</span> Searching...</div>`;
+    resultsDiv.innerHTML = `<div class="empty-state text-secondary"><span class="material-symbols-rounded spinner" style="vertical-align: middle; margin-right:8px;">sync</span> Searching...</div>`;
 
     try {
         const res = await apiFetch(`/search?q=${encodeURIComponent(query)}`);
@@ -226,16 +232,13 @@ async function initSearchPage() {
     }
 }
 
-/* 2. My Submissions Page */
 async function initSubmissionsPage() {
     const resultsDiv = document.getElementById('search-results');
-    resultsDiv.innerHTML = `<div class="empty-state text-secondary animate-fade-up"><span class="material-symbols-rounded spinner" style="vertical-align: middle; margin-right:8px;">sync</span> Loading your submissions...</div>`;
+    resultsDiv.innerHTML = `<div class="empty-state text-secondary"><span class="material-symbols-rounded spinner" style="vertical-align: middle; margin-right:8px;">sync</span> Loading your submissions...</div>`;
 
     try {
         const user = JSON.parse(localStorage.getItem('unisonIdentity'));
-        const res = await apiFetch(`/mine?limit=50`, {
-            headers: { "x-key-id": user.keyId }
-        });
+        const res = await apiFetch(`/mine?limit=50`, { headers: { "x-key-id": user.keyId } });
         const items = res.data ||[];
         
         if (!items.length) {
@@ -260,37 +263,11 @@ async function initSubmissionsPage() {
             </div>
         `).join('');
     } catch (err) {
-        resultsDiv.innerHTML = `<div class="empty-state text-secondary animate-fade-up" style="color: var(--danger)">
-  Failed to load submissions: ${err.message}<br>
-  Make sure you have uploaded at least one lyric.
-</div>`;
+        resultsDiv.innerHTML = `<div class="empty-state text-secondary animate-fade-up" style="color: var(--danger)">Failed to load submissions: ${err.message}</div>`;
     }
 }
 
-function handleLyricsFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        // Drop the file contents into the textarea
-        document.getElementById('sub-lyrics').value = e.target.result;
-        
-        // Auto-detect format based on file extension
-        const ext = file.name.split('.').pop().toLowerCase();
-        const formatSelect = document.getElementById('sub-format');
-        if (ext === 'ttml') formatSelect.value = 'ttml';
-        else if (ext === 'lrc' || ext === 'elrc') formatSelect.value = 'lrc';
-        
-        // Update the live preview
-        updateSubmitPreview();
-    };
-    reader.readAsText(file);
-    
-    // Clear the input so the same file can be uploaded again if needed
-    event.target.value = ''; 
-}
-
+// --- DETAIL PAGE ---
 async function initDetailPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -299,7 +276,7 @@ async function initDetailPage() {
     try {
         const res = await apiFetch(`/${id}`);
         const item = res.data;
-        window.currentLyricData = item; // Store for download
+        window.currentLyricData = item; 
 
         document.getElementById('det-title').innerText = item.song || 'Unknown';
         document.getElementById('det-artist').innerText = item.artist || 'Unknown';
@@ -321,7 +298,6 @@ async function initDetailPage() {
             previewText = item.lyrics.split('\n').map(l => l.replace(/\[.*?\]/g, '').replace(/<.*?>/g, '').trim()).filter(l=>l).join('\n');
         }
         document.getElementById('det-preview').innerText = previewText || "No preview available.";
-
         window.currentLyricId = id;
     } catch (err) {
         document.getElementById('det-title').innerText = "Error Loading Lyrics";
@@ -345,25 +321,15 @@ function downloadLyrics() {
     URL.revokeObjectURL(url);
 }
 
-async function submitVote(val) {
-    try {
-        await apiSignedAction(`/${window.currentLyricId}/vote`, { vote: val });
-        alert("Vote submitted successfully!");
-        location.reload();
-    } catch (err) { alert("Vote failed: " + err.message); }
+function copyRawLyrics() {
+    const rawText = document.getElementById('det-raw').innerText;
+    if (!rawText) return showToast("Nothing to copy!", "error");
+    navigator.clipboard.writeText(rawText).then(() => {
+        showToast("Raw lyrics copied to clipboard!", "info");
+    }).catch(err => { showToast("Failed to copy text", "error"); });
 }
 
-async function submitReport() {
-    const reason = document.getElementById('report-reason').value;
-    const details = document.getElementById('report-details').value;
-    try {
-        await apiSignedAction(`/${window.currentLyricId}/report`, { reason, details });
-        alert("Report submitted.");
-        document.getElementById('report-dialog').close();
-    } catch (err) { alert("Report failed: " + err.message); }
-}
-
-/* 4. Account Page */
+// --- ACCOUNT PAGE ---
 function initAccountPage() {
     const user = JSON.parse(localStorage.getItem('unisonIdentity'));
     document.getElementById('acc-name').innerText = user.displayName || 'Unknown User';
@@ -379,7 +345,7 @@ function initAccountPage() {
         
         document.getElementById('copy-id-btn').onclick = () => {
             navigator.clipboard.writeText(user.keyId);
-            alert("ID copied to clipboard!");
+            showToast("ID copied to clipboard!", "info");
         };
         document.getElementById('export-btn').onclick = () => {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(user));
@@ -402,94 +368,561 @@ function initAccountPage() {
     });
 }
 
-/* 5. Submit Page */
-function initSubmitPage() {
-    const inputArea = document.getElementById('sub-lyrics');
-    inputArea.addEventListener('input', updateSubmitPreview);
-}
 
-function updateSubmitPreview() {
-    const text = document.getElementById('sub-lyrics').value;
-    const previewBox = document.getElementById('preview-box');
-    
-    if(!text.trim()) { previewBox.innerText = "Preview will appear here..."; return; }
-    
-    let format = document.getElementById('sub-format').value;
-    let pText = text;
+// ==========================================
+// --- SUBMIT PAGE: MEDIA & SYNC LOGIC ---
+// ==========================================
 
-    if (format === 'auto' || format === 'ttml') {
-        if (text.includes('<tt') && text.includes('</tt>')) {
-            try {
-                let xmlDoc = new DOMParser().parseFromString(text, "text/xml");
-                pText = Array.from(xmlDoc.getElementsByTagName("p")).map(p => p.textContent.trim().replace(/\s+/g, ' ')).join('\n');
-                if (format === 'auto') document.getElementById('sub-format').value = 'ttml';
-            } catch(e){}
+const page = {
+    player: null,
+    isPlayerReady: false,
+    videoIdToLoad: null,
+    activeSource: 'yt',
+    syncTimer: null,
+
+    onPlayerReady() {
+        this.isPlayerReady = true;
+        if (this.videoIdToLoad) {
+            this.player.loadVideoById(this.videoIdToLoad);
+            this.videoIdToLoad = null;
         }
-    }
-    if ((format === 'auto' || format === 'lrc') && text.includes('[')) {
-        pText = text.split('\n').map(l => l.replace(/\[\d+:\d+\.\d+\]/g, '').replace(/<\d+:\d+\.\d+>/g, '').replace(/\[bg:.*?\]/g, '').trim()).filter(l=>l).join('\n');
-        if(format === 'auto') document.getElementById('sub-format').value = 'lrc';
-    }
-    previewBox.innerText = pText;
-}
+    },
 
-function formatTimeTTML(timestamp) {
-    if (!timestamp) return null;
-    let ts = timestamp.replace(/[\[\]<>]/g, '').trim();
-    let parts = ts.split(':');
-    if(parts.length < 2) return null;
-    let minutes = parseInt(parts[0], 10);
-    let seconds = parseFloat(parts[1]);
-    let hours = Math.floor(minutes / 60);
-    minutes = minutes % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${seconds.toFixed(3).padStart(6, '0')}`;
-}
+    switchSource(src) {
+        this.activeSource = src;
+        document.getElementById('tab-yt').classList.toggle('active', src === 'yt');
+        document.getElementById('tab-file').classList.toggle('active', src === 'file');
+        document.getElementById('input-yt').classList.toggle('hidden', src !== 'yt');
+        document.getElementById('input-file').classList.toggle('hidden', src !== 'file');
+        
+        document.getElementById('yt-player-container').classList.toggle('hidden', src !== 'yt');
+        document.getElementById('custom-audio-player').classList.toggle('hidden', src !== 'file');
+        document.getElementById('media-placeholder').classList.add('hidden');
+        document.getElementById('media-error-overlay').classList.add('hidden');
+        
+        this.stopSyncLoop();
+        if (src === 'file' && this.player && this.player.pauseVideo) this.player.pauseVideo();
+        if (src === 'yt') document.getElementById('local-player').pause();
+    },
 
-function convertLyrics(target) {
-    const area = document.getElementById('sub-lyrics');
-    let txt = area.value;
-    if(!txt.trim()) return alert("Paste ELRC lyrics first.");
+    parseYoutubeUrl(url) {
+        const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+        const match = url.match(regExp);
+        const id = (match && match[7].length === 11) ? match[7] : null;
 
-    if (target === 'lrc') {
-        area.value = txt.split('\n').map(line => line.replace(/<\d+:\d+\.\d+>/g, '').replace(/\[bg:(.*?)\]/g, '$1').replace(/\s+/g, ' ').trim()).filter(l => l).join('\n');
-        document.getElementById('sub-format').value = 'lrc';
-    } else if (target === 'ttml') {
-        let xml = `<?xml version="1.0" encoding="utf-8"?>\n<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xml:lang="en">\n  <body>\n    <div>\n`;
-        txt.split('\n').forEach(line => {
-            let match = line.match(/^\[(\d+:\d+\.\d+)\](.*)/);
-            if (!match) return;
-            let lineContent = match[2];
-            let allTs =[...line.matchAll(/(\d+:\d+\.\d+)/g)].map(m => m[1]);
-            if (!allTs.length) return;
+        if (id) {
+            document.getElementById('sub-vid').value = id;
+            document.getElementById('media-placeholder').classList.add('hidden');
+            document.getElementById('media-error-overlay').classList.add('hidden');
+
+            if (this.isPlayerReady) this.player.loadVideoById(id);
+            else this.videoIdToLoad = id;
+
+            this.fetchYouTubeMetadata(id);
+        }
+    },
+
+    async fetchYouTubeMetadata(id) {
+        try {
+            const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+            if (!res.ok) return;
+            const data = await res.json();
             
-            let formattedTs = allTs.map(formatTimeTTML).sort();
-            let pBegin = formattedTs[0];
-            let pEnd = formattedTs[formattedTs.length - 1];
-            if (pBegin === pEnd) {
-                let [m, s] = match[1].split(':').map(Number);
-                pEnd = formatTimeTTML(`${m}:${(s + 3.0).toFixed(3)}`);
-            }
+            let title = data.title || "";
+            let artist = data.author_name || ""; 
 
-            xml += `      <p begin="${pBegin}" end="${pEnd}">\n`;
-            const processSeg = (t, isBg) => {
-                let parts = t.split(/<(\d+:\d+\.\d+)>/g);
-                let res = isBg ? `        <span ttm:role="x-bg">\n` : "";
-                for (let j = 1; j < parts.length; j += 2) {
-                    if (parts[j+1]?.trim()) {
-                        let wE = (j + 2 < parts.length) ? formatTimeTTML(parts[j+2]) : pEnd;
-                        res += `          <span begin="${formatTimeTTML(parts[j])}" end="${wE}">${parts[j+1].trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")} </span>\n`;
+
+            const songInput = document.getElementById('sub-song');
+            const artistInput = document.getElementById('sub-artist');
+            
+            if (!songInput.value) songInput.value = title;
+            if (!artistInput.value) artistInput.value = artist.replace(" - Topic", "");
+            
+            showToast("YouTube metadata extracted automatically!", "info");
+        } catch (err) {}
+    },
+
+    loadLocalFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        const audio = document.getElementById('local-player');
+        audio.src = url;
+        
+        document.getElementById('media-placeholder').classList.add('hidden');
+        
+        if (window.jsmediatags) {
+            jsmediatags.read(file, {
+                onSuccess: function(tag) {
+                    const tags = tag.tags;
+                    const title = tags.title || file.name.split('.')[0];
+                    const artist = tags.artist || "Unknown Artist";
+                    
+                    document.getElementById('player-title').innerText = title;
+                    document.getElementById('player-artist').innerText = artist;
+                    
+                    if (!document.getElementById('sub-song').value) document.getElementById('sub-song').value = title;
+                    if (!document.getElementById('sub-artist').value) document.getElementById('sub-artist').value = artist;
+
+                    if (tags.picture) {
+                        const data = tags.picture.data;
+                        const format = tags.picture.format;
+                        let base64String = "";
+                        for (let i = 0; i < data.length; i++) base64String += String.fromCharCode(data[i]);
+                        const imgUrl = `data:${format};base64,${window.btoa(base64String)}`;
+                        
+                        document.getElementById('player-cover').src = imgUrl;
+                        document.getElementById('player-bg').style.backgroundImage = `url(${imgUrl})`;
+                    } else {
+                        page.setDefaultCover(title);
+                    }
+                },
+                onError: function() { page.setDefaultCover(file.name.split('.')[0]); }
+            });
+        }
+    },
+
+    setDefaultCover(title) {
+        document.getElementById('player-title').innerText = title || "Local Audio";
+        document.getElementById('player-artist').innerText = "Unknown Artist";
+        document.getElementById('player-cover').src = 'https://better-lyrics.boidu.dev/icons/logo.svg';
+        document.getElementById('player-bg').style.backgroundImage = 'none';
+        document.getElementById('player-bg').style.backgroundColor = '#111';
+    },
+
+    handlePlayerError(event) {
+        if ([2, 100, 101, 150].includes(event.data) && this.activeSource === 'yt') {
+            document.getElementById('media-error-overlay').classList.remove('hidden');
+        }
+    },
+
+    startSyncLoop() {
+        if (this.syncTimer) clearInterval(this.syncTimer);
+        window.currentActiveLineIndex = -1; 
+        
+        this.syncTimer = setInterval(() => {
+            let time = 0;
+            if (this.activeSource === 'yt' && this.player?.getPlayerState() === 1) {
+                time = this.player.getCurrentTime();
+            } else if (this.activeSource === 'file') {
+                time = document.getElementById('local-player').currentTime;
+            }
+            
+            if (window.parsedLines && time > 0) {
+                let activeIndex = -1;
+                for (let i = window.parsedLines.length - 1; i >= 0; i--) {
+                    if (time >= window.parsedLines[i].start) {
+                        activeIndex = i; break;
                     }
                 }
-                return res + (isBg ? `        </span>\n` : "");
-            };
-            xml += processSeg(lineContent.replace(/\[bg:(.*?)\]/g, '').trim(), false);[...lineContent.matchAll(/\[bg:(.*?)\]/g)].forEach(m => xml += processSeg(m[1].trim(), true));
-            xml += `      </p>\n`;
-        });
-        xml += `    </div>\n  </body>\n</tt>`;
-        area.value = xml;
-        document.getElementById('sub-format').value = 'ttml';
+
+                if (activeIndex !== -1) {
+                    const line = window.parsedLines[activeIndex];
+                    const lineEnd = line.end || line.start + 10;
+                    
+                    if (time < lineEnd) {
+                        if (window.currentActiveLineIndex !== activeIndex) {
+                            document.querySelectorAll('.lyric-line.active').forEach(l => l.classList.remove('active'));
+                            const el = document.getElementById(`line-${activeIndex}`);
+                            
+                            if (el) {
+                                el.classList.add('active');
+                                const container = document.getElementById('sync-preview-content');
+                                container.scrollTo({
+                                    top: el.offsetTop - (container.clientHeight / 2) + (el.clientHeight / 2),
+                                    behavior: 'smooth'
+                                });
+                            }
+                            window.currentActiveLineIndex = activeIndex;
+                        }
+
+                        if (line.words?.length) {
+                            line.words.forEach((w, wi) => {
+                                const wSpan = document.getElementById(`word-${activeIndex}-${wi}`);
+                                if (wSpan) wSpan.classList.toggle('active', time >= w.start);
+                            });
+                        }
+                    } else {
+                        if (window.currentActiveLineIndex !== -1) {
+                            document.querySelectorAll('.lyric-line.active').forEach(l => l.classList.remove('active'));
+                            window.currentActiveLineIndex = -1;
+                        }
+                    }
+                }
+            }
+        }, 50);
+    },
+    
+    stopSyncLoop() {
+        if (this.syncTimer) clearInterval(this.syncTimer);
     }
-    updateSubmitPreview();
+};
+
+function onYouTubeIframeAPIReady() {
+    page.player = new YT.Player('yt-player', {
+        height: '100%', width: '100%', videoId: '',
+        playerVars: { 'origin': window.location.origin, 'modestbranding': 1, 'playsinline': 1 },
+        events: {
+            'onReady': () => page.onPlayerReady(),
+            'onStateChange': (e) => {
+                if (e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.CUED) {
+                    const dur = page.player.getDuration();
+                    const durInput = document.getElementById('sub-duration');
+                    if (dur && !durInput.value) { durInput.value = Math.floor(dur); }
+                }
+                (e.data === YT.PlayerState.PLAYING) ? page.startSyncLoop() : page.stopSyncLoop();
+            },
+            'onError': (e) => page.handlePlayerError(e)
+        }
+    });
+}
+
+function initSubmitPage() {
+    const audio = document.getElementById('local-player');
+    const playBtn = document.getElementById('play-pause-btn');
+    const progress = document.getElementById('progress-bar');
+    const progressContainer = document.getElementById('progress-container');
+    const timeCurr = document.getElementById('time-current');
+    const timeTot = document.getElementById('time-total');
+
+    if(!audio) return;
+
+    playBtn.addEventListener('click', () => {
+        if(audio.paused) audio.play();
+        else audio.pause();
+    });
+
+    audio.addEventListener('play', () => {
+        playBtn.innerHTML = '<span class="material-symbols-rounded">pause</span>';
+        page.startSyncLoop();
+    });
+    
+    audio.addEventListener('pause', () => {
+        playBtn.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>';
+        page.stopSyncLoop();
+    });
+
+    audio.addEventListener('timeupdate', () => {
+        const pct = (audio.currentTime / audio.duration) * 100;
+        progress.style.width = pct + '%';
+        timeCurr.innerText = formatPlayerTime(audio.currentTime);
+        if(audio.duration && audio.duration !== Infinity) {
+            timeTot.innerText = formatPlayerTime(audio.duration);
+            document.getElementById('sub-duration').value = Math.floor(audio.duration);
+        }
+    });
+
+    audio.addEventListener('loadedmetadata', () => {
+         if(audio.duration && audio.duration !== Infinity) timeTot.innerText = formatPlayerTime(audio.duration);
+    });
+
+    progressContainer.addEventListener('click', (e) => {
+        const rect = progressContainer.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        audio.currentTime = (clickX / rect.width) * audio.duration;
+    });
+}
+
+// --- PARSERS & PREVIEW ENGINE ---
+function parseTimestamp(tsStr) {
+    if (!tsStr) return 0;
+    const parts = tsStr.replace(/[\[\]<>]/g, '').split(':');
+    if (parts.length < 2) return 0;
+    return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+}
+
+function parseTTMLTime(tsStr) {
+    if (!tsStr) return 0;
+    
+    // Handle raw seconds/milliseconds suffix just in case
+    if (tsStr.endsWith('ms')) return parseFloat(tsStr) / 1000;
+    if (tsStr.endsWith('s')) return parseFloat(tsStr);
+
+    // Split by colon
+    const parts = tsStr.split(':').map(parseFloat);
+
+    // If there are 3 parts it is HH:MM:SS.mmm
+    if (parts.length === 3) {
+        return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+    } 
+    // If there are 2 parts it is MM:SS.mmm (Which is what you are using)
+    else if (parts.length === 2) {
+        return (parts[0] * 60) + parts[1];
+    } 
+    // If there is 1 part it is just raw seconds SS.mmm
+    else if (parts.length === 1) {
+        return parts[0];
+    }
+
+    return 0;
+}
+
+function formatELRCTime(sec) {
+    if(isNaN(sec)) sec = 0;
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toFixed(3).padStart(6, '0');
+    return `${m}:${s}`;
+}
+
+function formatTTMLTime(sec) {
+    if(isNaN(sec)) sec = 0;
+    const h = Math.floor(sec / 3600).toString().padStart(2, '0');
+    const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toFixed(3).padStart(6, '0');
+    return `${h}:${m}:${s}`;
+}
+
+function parseTTML(xmlText) {
+
+    if(!xmlText.includes("</tt>")) xmlText += "</div></body></tt>"; 
+
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+    const pTags = Array.from(xmlDoc.getElementsByTagName("p"));
+    let parsed = [];
+
+    pTags.forEach(p => {
+        const start = parseTTMLTime(p.getAttribute("begin"));
+        const end = parseTTMLTime(p.getAttribute("end"));
+        const agent = p.getAttribute("ttm:agent") || "v1";
+        let words = [];
+        
+        function traverse(node, isBg) {
+            if (node.nodeName === 'span') {
+                const nodeBg = isBg || node.getAttribute("ttm:role") === "x-bg";
+                const b = node.getAttribute("begin");
+                
+                // If it contains direct text mapping
+                if (node.childNodes.length === 1 && node.childNodes[0].nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent.trim();
+                    if (text) {
+                        words.push({ start: parseTTMLTime(b) || start, text: text + " ", isBg: nodeBg });
+                    }
+                } else {
+                    node.childNodes.forEach(child => traverse(child, nodeBg));
+                }
+            } else if (node.nodeType === Node.TEXT_NODE) {
+                const text = node.textContent.trim();
+                if (text) words.push({ start, text: text + " ", isBg });
+            }
+        }
+
+        Array.from(p.childNodes).forEach(n => traverse(n, false));
+
+        parsed.push({ 
+            start, 
+            end: end || (words.length ? words[words.length-1].start + 2 : start + 5), 
+            agent,
+            text: p.textContent.trim().replace(/\s+/g, ' '), 
+            words 
+        });
+    });
+    return parsed;
+}
+
+function parseEnhancedLRC(rawText) {
+    const lines = rawText.split('\n');
+    let parsed = [];
+    
+    lines.forEach(line => {
+        // Find: [00:00.000]OptionalAgent: Content OR [00:00.000]Content
+        const matchLine = line.match(/^\[(\d{2}:\d{2}\.\d{2,3})\](?:([A-Za-z0-9_]+):)?(.*)/);
+        if (matchLine) {
+            const startTime = parseTimestamp(matchLine[1]);
+            const agent = matchLine[2] || "v1";
+            let content = matchLine[3];
+
+            // Normalize [bg: ] to ( ) to standardize bg vocal tags easily
+            content = content.replace(/\[bg:(.*?)\]/g, '($1)');
+
+            const words = [];
+            
+            // Extract chunks to detect Background Vocals based on () wrapper
+            let currentChunk = "";
+            let isBg = false;
+
+            for(let i=0; i<content.length; i++) {
+                if(content[i] === '(') {
+                    if(currentChunk) parseChunk(currentChunk, false, words, startTime);
+                    currentChunk = "";
+                    isBg = true;
+                } else if (content[i] === ')') {
+                    if(currentChunk) parseChunk(currentChunk, true, words, startTime);
+                    currentChunk = "";
+                    isBg = false;
+                } else {
+                    currentChunk += content[i];
+                }
+            }
+            if(currentChunk) parseChunk(currentChunk, isBg, words, startTime);
+
+            const plainText = content.replace(/<[^>]+>/g, '').replace(/[\(\)]/g, '').trim();
+
+            parsed.push({ start: startTime, text: plainText, words, agent });
+        }
+    });
+
+    for (let i = 0; i < parsed.length; i++) {
+        let e = parsed[i].start + 8;
+        if(parsed[i].words.length > 0) e = parsed[i].words[parsed[i].words.length-1].start + 1.5;
+        if(parsed[i+1]) e = Math.min(e, parsed[i+1].start);
+        parsed[i].end = e;
+    }
+    return parsed;
+}
+
+function parseChunk(text, isBg, wordsArr, lineStart) {
+    const wordRegex = /<(\d{2}:\d{2}\.\d{2,3})>([^<]+)/g;
+    let match;
+    let foundAny = false;
+    while ((match = wordRegex.exec(text)) !== null) {
+        foundAny = true;
+        wordsArr.push({ start: parseTimestamp(match[1]), text: match[2].trim() + " ", isBg });
+    }
+    if(!foundAny && text.trim()) {
+        wordsArr.push({ start: lineStart, text: text.trim() + " ", isBg });
+    }
+}
+
+function renderPreview() {
+    const container = document.getElementById('sync-preview-content');
+    container.innerHTML = '';
+    
+    if (!window.parsedLines || window.parsedLines.length === 0) {
+        container.innerHTML = `<div class="empty-state text-muted">Invalid format or empty lyrics</div>`;
+        return;
+    }
+
+    window.parsedLines.forEach((line, i) => {
+        const div = document.createElement('div');
+        div.className = 'lyric-line';
+        if(line.agent && line.agent !== 'v1') div.classList.add(`agent-${line.agent}`);
+        div.id = `line-${i}`;
+
+        if (line.words && line.words.length > 0) {
+            line.words.forEach((w, wi) => {
+                const span = document.createElement('span');
+                span.className = 'lyric-word';
+                if(w.isBg) span.classList.add('bg-vocal');
+                span.id = `word-${i}-${wi}`;
+                span.innerText = w.text;
+                div.appendChild(span);
+            });
+        } else {
+            div.innerText = line.text;
+        }
+        container.appendChild(div);
+    });
+}
+
+function updateSyncPreview() {
+    const text = document.getElementById('sub-lyrics').value;
+    if (!text.trim()) {
+        document.getElementById('sync-preview-content').innerHTML = `<div class="empty-state text-muted">Lyrics will animate here</div>`;
+        return;
+    }
+    
+    const isTTML = text.trim().startsWith('<?xml') || text.trim().startsWith('<tt');
+    
+    // Warning system recommending TTML for accuracy (triggers once)
+    if (!isTTML && !hasWarnedELRC) {
+        showToast("We highly recommend using TTML Format instead of LRC/ELRC for precise accuracy & Better Lyrics support.", "info");
+        hasWarnedELRC = true; 
+    }
+
+    if (isTTML) window.parsedLines = parseTTML(text);
+    else window.parsedLines = parseEnhancedLRC(text);
+    
+    renderPreview();
+}
+
+function handleLyricsFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('sub-lyrics').value = e.target.result;
+        updateSyncPreview();
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+// --- FORMAT CONVERSIONS (Bidirectional) ---
+function convertLyrics(target) {
+    const rawText = document.getElementById('sub-lyrics').value;
+    if (!rawText.trim()) return showToast("Please paste or upload lyrics first.", "error");
+
+    const isCurrentTTML = rawText.trim().startsWith('<?xml') || rawText.trim().startsWith('<tt');
+    window.parsedLines = isCurrentTTML ? parseTTML(rawText) : parseEnhancedLRC(rawText);
+
+    if (!window.parsedLines.length) return showToast("Could not extract valid lyric timings.", "error");
+
+    if (target === 'ttml') {
+        let xml = `<?xml version="1.0" encoding="utf-8"?>\n<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" xmlns:composer="https://composer.boidu.dev/ttml" ttp:timeBase="media" xml:lang="en" composer:timing="Word">\n  <head>\n    <metadata>\n`;
+        
+        // Setup default agents dynamically based on content parsed
+        let agents = new Set(window.parsedLines.map(l => l.agent || 'v1'));
+        agents.forEach(a => {
+            const name = a === 'v1' ? 'Lead' : 'Walker';
+            xml += `      <ttm:agent xml:id="${a}" type="person"><ttm:name>${name}</ttm:name></ttm:agent>\n`;
+        });
+        xml += `    </metadata>\n  </head>\n  <body>\n    <div>\n`;
+
+        window.parsedLines.forEach(line => {
+            xml += `      <p begin="${formatTTMLTime(line.start)}" end="${formatTTMLTime(line.end)}" ttm:agent="${line.agent || 'v1'}">`;
+            if (line.words.length > 0) {
+                let insideBg = false;
+                line.words.forEach((word, i) => {
+                    const wordEnd = (line.words[i+1]) ? line.words[i+1].start : line.end;
+                    const safeText = word.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').trim();
+                    if (!safeText) return; // Skip completely empty tags
+
+                    if (word.isBg && !insideBg) { xml += `<span ttm:role="x-bg">`; insideBg = true; }
+                    if (!word.isBg && insideBg) { xml += `</span>`; insideBg = false; }
+                    
+                    xml += `<span begin="${formatTTMLTime(word.start)}" end="${formatTTMLTime(wordEnd)}">${safeText}</span> `;
+                });
+                if (insideBg) xml += `</span>`;
+            } else {
+                xml += line.text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+            }
+            xml += `</p>\n`;
+        });
+
+        xml += `    </div>\n  </body>\n</tt>`;
+        document.getElementById('sub-lyrics').value = xml;
+        showToast("Converted to standard TTML Format!", "success");
+
+    } else if (target === 'elrc') {
+        let elrcStr = "";
+        window.parsedLines.forEach(line => {
+            const ts = formatELRCTime(line.start);
+            elrcStr += `[${ts}]`;
+            
+            if (line.agent && line.agent !== 'v1') elrcStr += `${line.agent}:`;
+
+            if (line.words.length > 0) {
+                let insideBg = false;
+                line.words.forEach((w) => {
+                    if (w.isBg && !insideBg) { elrcStr += "("; insideBg = true; }
+                    if (!w.isBg && insideBg) { elrcStr += ") "; insideBg = false; }
+                    
+                    const safeText = w.text.trim();
+                    if(safeText) elrcStr += `<${formatELRCTime(w.start)}>${safeText} `;
+                });
+                if(insideBg) elrcStr += ")";
+            } else {
+                elrcStr += line.text;
+            }
+            elrcStr += "\n";
+        });
+        
+        document.getElementById('sub-lyrics').value = elrcStr.trim();
+        showToast("Converted to standard ELRC Format!", "success");
+    }
+
+    updateSyncPreview();
 }
 
 async function submitLyricsForm() {
@@ -500,31 +933,30 @@ async function submitLyricsForm() {
     const lyrics = document.getElementById('sub-lyrics').value.trim();
     const btn = document.getElementById('submit-btn');
 
-    if(!vid || !song || !artist || !durStr || !lyrics) return alert("Please fill in all required fields.");
-
-    let format = document.getElementById('sub-format').value;
-    if(format === 'auto') format = lyrics.includes('<tt') ? 'ttml' : 'lrc';
+    if(!vid && page.activeSource === 'yt') return showToast("Please provide a valid YouTube URL.", "error");
+    if(!song || !artist || !durStr || !lyrics) return showToast("Please fill in all required fields.", "error");
+    
+    let format = (lyrics.trim().startsWith('<?xml') || lyrics.trim().startsWith('<tt')) ? 'ttml' : 'lrc';
 
     try {
         btn.disabled = true;
         btn.innerHTML = '<span class="material-symbols-rounded spinner">sync</span> Publishing...';
 
         const payload = {
-            videoId: vid, song, artist, lyrics, format,
+            videoId: vid || "local-file", 
+            song, artist, lyrics, format,
             duration: parseInt(durStr, 10),
-            album: document.getElementById('sub-album').value.trim() || undefined,
             language: "en",
-            syncType: format === 'ttml' ? 'richsync' : (format === 'lrc' ? 'linesync' : 'plain')
+            syncType: format === 'ttml' ? 'richsync' : 'linesync'
         };
 
         await apiSignedAction('/submit', payload);
-        alert("Successfully published! ✅");
-        window.location.href = 'index.html';
+        showToast("Successfully published!", "success");
+        setTimeout(() => window.location.href = 'index.html', 1500);
     } catch(e) {
-        alert("Submission failed: " + e.message);
+        showToast("Submission failed: " + e.message, "error");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-rounded">publish</span> Submit to Unison';
+        btn.innerHTML = '<span class="material-symbols-rounded">publish</span> Publish to Unison';
     }
 }
-

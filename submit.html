@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Lyrics | Unison</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- JS Media Tags for Audio ID3 Parsing (Cover Art & Info) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 </head>
 <body id="page-submit">
 
@@ -12,14 +14,11 @@
         <div class="nav-left">
             <a href="index.html" class="logo">
                 <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
-                <div class="logo-text">
-                    <h1>Unison</h1>
-                    <span>Submit Lyrics</span>
-                </div>
+                <div class="logo-text"><h1>Unison</h1><span>Submit Lyrics</span></div>
             </a>
             <nav class="nav-links">
-                <a href="index.html" id="nav-search">Search</a>
-                <a href="submissions.html" id="nav-submissions">My Submissions</a>
+                <a href="index.html">Search</a>
+                <a href="submissions.html">My Submissions</a>
             </nav>
         </div>
         <div class="nav-right">
@@ -28,72 +27,117 @@
     </header>
 
     <main class="animate-fade-up">
-        <div class="page-header" style="text-align: left;">
-            <h2>Submit Lyrics</h2>
-            <p class="text-secondary">Submit community lyrics. Converters available for ELRC format.</p>
+        <div class="page-header" style="text-align: left; margin-bottom: 20px;">
+            <h2>Submit & Sync</h2>
+            <p class="text-secondary">Sync your lyrics with a YouTube link or local audio file.</p>
         </div>
 
         <div class="split-layout submit-layout">
+            <!-- Form Pane -->
             <div class="form-pane">
                 <div class="pane-content">
+                    <div class="source-tabs">
+                        <div class="source-tab active" id="tab-yt" onclick="page.switchSource('yt')">YouTube Link</div>
+                        <div class="source-tab" id="tab-file" onclick="page.switchSource('file')">Audio File</div>
+                    </div>
+
+                    <div id="input-yt">
+                        <div class="form-group"><label>YouTube URL</label>
+                            <input type="text" id="sub-url-input" class="input-element" placeholder="https://www.youtube.com/watch?v=..." oninput="page.parseYoutubeUrl(this.value)">
+                        </div>
+                    </div>
+                    <div id="input-file" class="hidden">
+                        <div class="form-group"><label>Upload Audio (Preview & Metadata)</label>
+                            <input type="file" id="audio-file" class="input-element" accept="audio/*" onchange="page.loadLocalFile(event)">
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group"><label>Song Title *</label><input type="text" id="sub-song" class="input-element"></div>
                         <div class="form-group"><label>Artist *</label><input type="text" id="sub-artist" class="input-element"></div>
                     </div>
+
                     <div class="form-row">
-                        <div class="form-group"><label>Album</label><input type="text" id="sub-album" class="input-element"></div>
+                        <div class="form-group"><label>Video ID</label><input type="text" id="sub-vid" class="input-element" readonly placeholder="Auto-parsed"></div>
                         <div class="form-group"><label>Duration (sec) *</label><input type="number" id="sub-duration" class="input-element"></div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Video ID *</label><input type="text" id="sub-vid" class="input-element"></div>
-                        <div class="form-group"><label>Format</label>
-                            <select id="sub-format" class="input-element">
-                                <option value="auto">Auto-detect</option>
-                                <option value="ttml">TTML (Richsync)</option>
-                                <option value="lrc">LRC (Linesync)</option>
-                            </select>
-                        </div>
-                    </div>
+
                     <div class="form-group mt-2">
-                        <div class="flex-between" style="margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                        <div class="flex-between" style="margin-bottom: 8px;">
                             <label style="margin:0;">Lyrics Payload *</label>
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-        
-                        <button class="btn btn-small" onclick="document.getElementById('lyrics-file').click()">
-                            <span class="material-symbols-rounded" style="font-size: 16px;">upload_file</span> Upload
-                        </button>
-                        <input type="file" id="lyrics-file" accept=".lrc,.elrc,.ttml,.txt" style="display:none;" onchange="handleLyricsFileUpload(event)">
-        
-        
-                        <button class="btn btn-small" onclick="convertLyrics('lrc')">To LRC</button>
-                        <button class="btn btn-small" onclick="convertLyrics('ttml')">To TTML</button>
-                </div>
-</div>
-                        <textarea id="sub-lyrics" rows="12" class="input-element" placeholder="Paste lyrics here..."></textarea>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-small" onclick="document.getElementById('lyrics-file-input').click()">
+                                    <span class="material-symbols-rounded" style="font-size: 16px;">upload</span> Upload
+                                </button>
+                                <input type="file" id="lyrics-file-input" class="hidden" accept=".lrc,.elrc,.txt,.ttml" onchange="handleLyricsFileUpload(event)">
+                                <button class="btn btn-small" onclick="convertLyrics('ttml')">Convert to TTML</button>
+                            </div>
+                        </div>
+                        <textarea id="sub-lyrics" rows="10" class="input-element" placeholder="[00:12.00] Paste lyrics here..." oninput="updateSyncPreview()"></textarea>
                     </div>
+
                     <button class="btn btn-primary btn-full mt-2" id="submit-btn" onclick="submitLyricsForm()">
-                        <span class="material-symbols-rounded">publish</span> Submit to Unison
+                        <span class="material-symbols-rounded">publish</span> Publish to Unison
                     </button>
                 </div>
             </div>
 
-            <!-- Fixed scrollable preview box -->
-            <div class="preview-pane panel" style="padding: 0;">
-                <label class="section-label" style="padding: 24px 24px 0;">Live Preview</label>
-                <div class="pane-content" style="padding: 12px 24px 24px;">
-                    <div id="preview-box" class="text-muted">Preview will appear here...</div>
+            <!-- Preview Pane -->
+            <div class="preview-pane panel">
+                <div class="media-container">
+                    <div id="yt-player-container">
+                        <div id="yt-player"></div>
+                    </div>
+
+                    <!-- Custom Audio Mini Player -->
+                    <div id="custom-audio-player" class="hidden">
+                        <div class="player-bg" id="player-bg"></div>
+                        <div class="player-content">
+                            <img id="player-cover" src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Cover Art">
+                            <div id="player-title">Upload a Track</div>
+                            <div id="player-artist">Artist Info</div>
+                        </div>
+                        <div class="player-controls-wrapper">
+                            <div class="progress-row">
+                                <span id="time-current">0:00</span>
+                                <div class="progress-container" id="progress-container">
+                                    <div class="progress-bar" id="progress-bar"></div>
+                                </div>
+                                <span id="time-total">0:00</span>
+                            </div>
+                            <div class="controls-row">
+                                <button id="play-pause-btn" class="play-btn">
+                                    <span class="material-symbols-rounded">play_arrow</span>
+                                </button>
+                            </div>
+                        </div>
+                        <audio id="local-player" class="hidden"></audio>
+                    </div>
+                    
+                    <div id="media-placeholder" class="text-muted flex-center">
+                        <span class="material-symbols-rounded" style="font-size: 48px; margin-bottom: 8px;">play_circle</span>
+                        No Media Loaded
+                    </div>
+                    
+                    <div id="media-error-overlay" class="hidden">
+                        <span class="material-symbols-rounded" style="font-size: 48px; color: var(--danger)">error</span>
+                        <h4 style="margin-top: 16px;">Video Unavailable</h4>
+                        <p class="text-secondary" style="font-size: 0.9rem; margin-top: 8px;">
+                            The creator disabled embedding for this video.<br>
+                            Click the <b>Audio File</b> tab and upload the track<br>to sync and preview locally.
+                        </p>
+                    </div>
+                </div>
+                <div id="sync-preview-content">
+                    <div class="empty-state text-muted">Lyrics will preview here</div>
                 </div>
             </div>
         </div>
     </main>
 
-    <footer class="app-footer">
-        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
-            Made by Walker
-            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
-        </div>
-    </footer>
+    <div id="toast-container"></div>
 
     <script src="app.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

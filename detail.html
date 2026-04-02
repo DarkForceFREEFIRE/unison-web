@@ -23,79 +23,104 @@
             </nav>
         </div>
         <div class="nav-right">
-            <a href="index.html" class="btn"><span class="material-symbols-rounded">arrow_back</span> Back</a>
+            <a href="javascript:history.back()" class="btn"><span class="material-symbols-rounded">arrow_back</span> Back</a>
         </div>
     </header>
 
     <main class="animate-fade-up">
-        <div class="split-layout detail-layout">
-            <div class="meta-pane">
-                <h2 id="det-title" style="font-size: 1.75rem; line-height:1.2;">Loading...</h2>
-                <p id="det-artist" class="text-secondary mt-1" style="font-size: 1.1rem;">Loading...</p>
-
-                <div class="meta-grid mt-3">
-                    <span class="meta-lbl">FORMAT</span> <span id="det-format" class="meta-val">--</span>
-                    <span class="meta-lbl">SYNC</span> <span id="det-sync" class="meta-val">--</span>
-                    <span class="meta-lbl">LANG</span> <span id="det-lang" class="meta-val">--</span>
+        <div class="detail-container">
+            
+            <!-- Unified Header Section -->
+            <div class="header-card panel">
+                <div class="header-info">
+                    <h2 id="det-title">Loading...</h2>
+                    <p id="det-artist" class="text-secondary">Loading...</p>
+                    <div class="badges-row">
+                        <span class="badge"><span class="material-symbols-rounded" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">code</span> <span id="det-format">--</span></span>
+                        <span class="badge"><span class="material-symbols-rounded" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">sync</span> <span id="det-sync">--</span></span>
+                        <span class="badge"><span class="material-symbols-rounded" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">translate</span> <span id="det-lang">--</span></span>
+                    </div>
                 </div>
-
-                <div class="vote-section">
+                <div class="score-box">
                     <div class="vote-score" id="det-score">0.0</div>
-                    <div class="text-secondary" id="det-votecount">0 votes</div>
-                </div>
-
-                <div style="display: flex; flex-direction: column; gap: 12px; margin-top: auto;">
-                    <button class="btn" onclick="submitVote(1)"><span class="material-symbols-rounded">thumb_up</span> Upvote</button>
-                    <button class="btn" onclick="submitVote(-1)"><span class="material-symbols-rounded">thumb_down</span> Downvote</button>
-                    <button class="btn btn-danger" onclick="document.getElementById('report-dialog').showModal()">
-                        <span class="material-symbols-rounded">flag</span> Report Lyrics
-                    </button>
+                    <div class="text-secondary" id="det-votecount" style="font-size: 0.85rem; font-weight: 600;">0 votes</div>
                 </div>
             </div>
 
-            <!-- Fixed scrollable panes -->
-            <div class="preview-pane panel" style="padding: 0;">
-                <label class="section-label" style="padding: 24px 24px 0;">Preview</label>
-                <div class="pane-content" style="padding: 12px 24px 24px;">
-                    <div id="det-preview"></div>
-                </div>
+            <!-- Enhanced Action Bar -->
+            <div class="action-bar">
+                <button class="btn" onclick="submitVote(1)">
+                    <span class="material-symbols-rounded">thumb_up</span> Upvote
+                </button>
+                <button class="btn" onclick="submitVote(-1)">
+                    <span class="material-symbols-rounded">thumb_down</span> Downvote
+                </button>
+                <button class="btn" onclick="downloadLyrics()">
+                    <span class="material-symbols-rounded">download</span> Download File
+                </button>
+                <button class="btn btn-danger" onclick="document.getElementById('report-dialog').showModal()">
+                    <span class="material-symbols-rounded">flag</span> Report Issue
+                </button>
             </div>
 
-            <div class="raw-pane panel" style="padding: 0;">
-                <div class="flex-between" style="padding: 16px 24px; border-bottom: 1px solid var(--border-color); flex-shrink: 0;">
-                    <label class="section-label" style="margin: 0;">Raw Payload</label>
-                    <button class="btn btn-small" onclick="downloadLyrics()">
-                        <span class="material-symbols-rounded" style="font-size: 16px;">download</span> Download
-                    </button>
+            <!-- Content Area (Side-by-side Desktop, Stacked Mobile) -->
+            <div class="content-grid">
+                
+                <!-- Preview Panel -->
+                <div class="panel scrollable-panel">
+                    <div class="panel-header flex-between">
+                        <label class="section-label" style="margin: 0;">Parsed Preview</label>
+                        <span class="material-symbols-rounded text-muted">visibility</span>
+                    </div>
+                    <div class="panel-body">
+                        <div id="det-preview"></div>
+                    </div>
                 </div>
-                <div class="pane-content" style="padding: 24px;">
-                    <div id="det-raw"></div>
+
+                <!-- Raw Panel -->
+                <div class="panel scrollable-panel">
+                    <div class="panel-header flex-between">
+                        <label class="section-label" style="margin: 0;">Raw Payload</label>
+                        <button class="btn btn-small" onclick="copyRawLyrics()">
+                            <span class="material-symbols-rounded" style="font-size: 16px;">content_copy</span> Copy Raw
+                        </button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="det-raw"></div>
+                    </div>
                 </div>
+
             </div>
         </div>
     </main>
 
+    <!-- Report Dialog -->
     <dialog id="report-dialog">
-        <h3 style="margin-bottom: 16px;">Report Lyrics</h3>
+        <h3 style="margin-bottom: 16px; font-size: 1.5rem; letter-spacing: -0.02em;">Report Lyrics</h3>
+        <p class="text-secondary mb-3" style="font-size: 0.9rem;">Help us keep Unison accurate by reporting incorrect or malicious uploads.</p>
+        
         <div class="form-group">
-            <label>Reason</label>
+            <label>Reason for report</label>
             <select id="report-reason" class="input-element">
                 <option value="wrong_song">Wrong Song</option>
                 <option value="bad_sync">Bad Synchronization</option>
                 <option value="offensive">Offensive Content</option>
-                <option value="spam">Spam</option>
+                <option value="spam">Spam / Junk</option>
                 <option value="other">Other</option>
             </select>
         </div>
         <div class="form-group">
-            <label>Details (Optional)</label>
-            <input type="text" id="report-details" class="input-element">
+            <label>Additional Details (Optional)</label>
+            <textarea id="report-details" class="input-element" rows="3" placeholder="Provide more context..."></textarea>
         </div>
         <div class="flex-between mt-3">
             <button class="btn" onclick="document.getElementById('report-dialog').close()">Cancel</button>
             <button class="btn btn-danger" onclick="submitReport()">Submit Report</button>
         </div>
     </dialog>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
 
     <footer class="app-footer">
         <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
