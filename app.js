@@ -430,13 +430,17 @@ function initAccountPage() {
 
     const themeBtn = document.getElementById('theme-toggle-btn');
     const currentTheme = localStorage.getItem('unisonTheme') || 'dark';
-    themeBtn.innerHTML = currentTheme === 'dark' ? '<span class="material-symbols-rounded">light_mode</span> Switch to Light Mode' : '<span class="material-symbols-rounded">dark_mode</span> Switch to Dark Mode';
+    themeBtn.innerHTML = currentTheme === 'dark' 
+        ? '<span class="material-symbols-rounded">light_mode</span> <span class="hide-mobile">Switch to Light Mode</span>' 
+        : '<span class="material-symbols-rounded">dark_mode</span> <span class="hide-mobile">Switch to Dark Mode</span>';
 
     themeBtn.addEventListener('click', () => {
         const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('unisonTheme', newTheme);
-        themeBtn.innerHTML = newTheme === 'dark' ? '<span class="material-symbols-rounded">light_mode</span> Switch to Light Mode' : '<span class="material-symbols-rounded">dark_mode</span> Switch to Dark Mode';
+        themeBtn.innerHTML = newTheme === 'dark' 
+            ? '<span class="material-symbols-rounded">light_mode</span> <span class="hide-mobile">Switch to Light Mode</span>' 
+            : '<span class="material-symbols-rounded">dark_mode</span> <span class="hide-mobile">Switch to Dark Mode</span>';
     });
 }
 
@@ -637,14 +641,16 @@ const page = {
                             
                             // Setup new active line
                             activeLineContainer = document.getElementById(`line-${activeIndex}`);
-                            
+
                             if (activeLineContainer) {
                                 activeLineContainer.classList.add('active');
-                                const container = activeLineContainer.parentElement;
-                                container.scrollTo({
-                                    top: activeLineContainer.offsetTop - (container.clientHeight / 2) + (activeLineContainer.clientHeight / 2),
-                                    behavior: 'smooth'
+                                
+                                // Natively center the element (fixes jumping caused by content-visibility unloading)
+                                activeLineContainer.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center'
                                 });
+
 
                                 // OPTIMIZATION 3: Cache the DOM elements for words. 
                                 // We do this ONCE per line instead of 60 times a second.

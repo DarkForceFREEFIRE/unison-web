@@ -293,10 +293,15 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); }
 
 @media (max-width: 960px) {
     
+    
     main { padding: 20px; }
     .split-layout { grid-template-columns: 1fr; height: auto; min-height: auto; max-height: none;}
     .form-pane, .pane-content { overflow: visible; height: auto; padding-right: 0;}
     .form-row { flex-direction: column; gap: 0; }
+
+    .hide-mobile {
+        display: none !important;
+    }
     
     
     .top-nav { flex-direction: column; align-items: stretch; padding: 16px 20px; gap: 16px; }
