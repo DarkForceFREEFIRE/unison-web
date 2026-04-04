@@ -54,6 +54,20 @@
             </div>
             
             <hr>
+            <div class="flex-between">
+                <div class="flex-center gap-2">
+                    <img id="acc-avatar-preview" src="https://better-lyrics.boidu.dev/icons/logo.svg" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); background: var(--bg-input);">
+                    <div>
+                        <h4>Profile Avatar</h4>
+                        <p class="text-secondary" style="font-size: 0.85rem;">Upload a custom image.</p>
+                    </div>
+                </div>
+                
+                <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" style="display:none;" onchange="handleAvatarUpload(event)">
+                <button class="btn" onclick="document.getElementById('avatar-upload').click()">
+                    <span class="material-symbols-rounded">upload</span> <span class="hide-mobile">Upload</span>
+                </button>
+            </div>
 
             <div class="flex-between">
                 <div>

@@ -50,6 +50,7 @@
                 <p class="text-secondary" id="time-text">-- : --</p>
             </div>
             
+            <!-- SECTION 1: QUICK ACCESS -->
             <div class="animate-fade-up" style="animation-delay: 0.1s;">
                 <h3 class="mb-2" style="font-size:1.4rem;">Quick access</h3>
                 <div class="products-grid">
@@ -107,15 +108,21 @@
                         </div>
                     </div>
 
-                </div>
+                </div> <!-- This closing div now correctly ends the products-grid -->
             </div>
-        </div>
 
-        <div id="search-results-view" style="display: none;">
-            <div class="page-header animate-fade-up">
-                <h2 id="search-header">Search Results</h2>
-            </div>
-            <div class="cards-grid" id="search-results">
+            <!-- SECTION 2: COMMUNITY MEMBERS -->
+            <div class="animate-fade-up" style="animation-delay: 0.2s; margin-top: 48px;">
+                <h3 class="mb-2" style="font-size:1.4rem;">Community Members</h3>
+                <p class="text-secondary mb-3" style="font-size: 0.95rem; margin-top: -8px;">Say hello to recently active Unison users.</p>
+                
+                <div class="users-grid" id="active-users-list">
+                    <!-- This will be populated by app.js -->
+                    <div class="empty-state text-secondary" style="min-height: 120px;">
+                        <span class="material-symbols-rounded spinner" style="vertical-align: middle; margin-right:8px;">sync</span> 
+                        Loading members...
+                    </div>
+                </div>
             </div>
         </div>
     </main>

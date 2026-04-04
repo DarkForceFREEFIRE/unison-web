@@ -17,6 +17,7 @@ const DEFAULT_IDENTITY = {
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmb290cWxxem13YnBxdm9oaXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTgyMjYsImV4cCI6MjA5MDgzNDIyNn0.yYwJ_YWhlMHGDVTQvbwAfVEPO9cJVo5QIlrllGDobSI";
 const FEEDBACK_API_URL = "https://rfootqlqzmwbpqvohiqu.supabase.co/functions/v1/submit-feedback";
+const USERS_API_URL = "https://rfootqlqzmwbpqvohiqu.supabase.co/functions/v1/hyper-action";
 
 let ytPlayer = null;
 window.parsedLines = [];
@@ -153,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const pageId = document.body.id;
     if (pageId === 'page-search') {
         initSearchPage();
+        loadActiveUsers();
         setInterval(updateGreetingTime, 1000);
         updateGreetingTime();
     }
@@ -405,6 +407,8 @@ function copyRawLyrics() {
 function initAccountPage() {
     const user = JSON.parse(localStorage.getItem('unisonIdentity'));
     document.getElementById('acc-name').innerText = user.displayName || 'Unknown User';
+    const savedAvatar = localStorage.getItem('unisonAvatar');
+    if (savedAvatar) document.getElementById('acc-avatar-preview').src = savedAvatar;
     
     const privateDetails = document.getElementById('private-details');
     if (user.keyId === DEFAULT_IDENTITY.keyId) {
@@ -1268,3 +1272,119 @@ window.renderFeedbackList = async function() {
         list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem; color: var(--danger);">Failed to load feedback from server.</div>';
     }
 };
+
+// --- COMMUNITY MEMBERS & AVATARS ---
+
+// 1. Image Compressor/Resizer (Keeps DB fast)
+function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            // Create a canvas to resize the image to 120x120
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 120;
+            const MAX_HEIGHT = 120;
+            canvas.width = MAX_WIDTH;
+            canvas.height = MAX_HEIGHT;
+
+            const ctx = canvas.getContext('2d');
+            // Crop and center the image
+            const size = Math.min(img.width, img.height);
+            const x = (img.width - size) / 2;
+            const y = (img.height - size) / 2;
+            
+            ctx.drawImage(img, x, y, size, size, 0, 0, MAX_WIDTH, MAX_HEIGHT);
+
+            // Compress to base64 WebP/JPEG
+            const base64Data = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Save locally and update UI
+            localStorage.setItem('unisonAvatar', base64Data);
+            const preview = document.getElementById('acc-avatar-preview');
+            if (preview) preview.src = base64Data;
+
+            showToast("Avatar updated successfully!", "success");
+            
+            // Sync immediately with Supabase Edge Function
+            logCurrentUser(); 
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// 2. Updated Log Current User
+async function logCurrentUser() {
+    const user = JSON.parse(localStorage.getItem('unisonIdentity'));
+    if (!user) return;
+    
+    // Get custom avatar if it exists
+    const avatarData = localStorage.getItem('unisonAvatar');
+    
+    try {
+        await fetch(USERS_API_URL, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
+            },
+            body: JSON.stringify({ 
+                username: user.displayName || 'Unknown User',
+                keyId: user.keyId,
+                avatarData: avatarData || null
+            })
+        });
+    } catch(e) {
+        console.warn("Could not log user presence", e);
+    }
+}
+
+// 3. Updated Load Active Users
+async function loadActiveUsers() {
+    const list = document.getElementById('active-users-list');
+    if (!list) return;
+
+    try {
+        logCurrentUser();
+
+        const response = await fetch(USERS_API_URL, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch users");
+        const users = await response.json();
+        
+        if (!users || !users.length) {
+            list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px;">No other members online right now.</div>';
+            return;
+        }
+        
+        list.innerHTML = users.map((u, index) => {
+            const delay = index * 0.05; 
+            // Use the new red logo as the default if no custom avatar exists
+            const imgSrc = u.avatar_data || 'https://better-lyrics.boidu.dev/icons/logo.svg';
+            
+            return `
+            <div class="user-card animate-fade-up" style="animation-delay: ${delay}s;">
+                <div class="user-avatar">
+                    <img src="${imgSrc}" alt="${u.username}">
+                </div>
+                <div class="user-info">
+                    <div class="user-name">${u.username || 'Anonymous'}</div>
+                    <div class="user-status">
+                        <div class="status-dot"></div> Active
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+
+    } catch(err) {
+        list.innerHTML = `<div class="empty-state text-muted" style="min-height: 100px; color: var(--danger);">Failed to load community members.</div>`;
+    }
+}
