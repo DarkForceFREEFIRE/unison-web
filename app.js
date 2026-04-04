@@ -15,6 +15,9 @@ const DEFAULT_IDENTITY = {
     "displayName": "MysticSnareRise"
 };
 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmb290cWxxem13YnBxdm9oaXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTgyMjYsImV4cCI6MjA5MDgzNDIyNn0.yYwJ_YWhlMHGDVTQvbwAfVEPO9cJVo5QIlrllGDobSI";
+const FEEDBACK_API_URL = "https://rfootqlqzmwbpqvohiqu.supabase.co/functions/v1/submit-feedback";
+
 let ytPlayer = null;
 window.parsedLines = [];
 window.currentActiveLineIndex = -1;
@@ -945,14 +948,24 @@ function renderPreview(containerId = 'sync-preview-content') {
         div.id = `line-${i}`;
 
         if (line.words && line.words.length > 0) {
+            const mainContainer = document.createElement('div');
+            mainContainer.className = 'main-vocals';
+            const bgContainer = document.createElement('div');
+            bgContainer.className = 'bg-vocals-container';
+
             line.words.forEach((w, wi) => {
                 const span = document.createElement('span');
                 span.className = 'lyric-word';
                 if(w.isBg) span.classList.add('bg-vocal');
                 span.id = `word-${i}-${wi}`;
                 span.innerText = w.text;
-                div.appendChild(span);
+                
+                if (w.isBg) bgContainer.appendChild(span);
+                else mainContainer.appendChild(span);
             });
+
+            if (mainContainer.childNodes.length > 0) div.appendChild(mainContainer);
+            if (bgContainer.childNodes.length > 0) div.appendChild(bgContainer);
         } else {
             div.innerText = line.text;
         }
@@ -1100,7 +1113,27 @@ window.fixLyricsFormatting = function() {
     }
 }
 
-// Collapsible function for UI elements
+
+document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    if (e.code === 'Space') {
+        e.preventDefault(); 
+        if (page && page.activeSource === 'yt' && ytPlayer && typeof ytPlayer.getPlayerState === 'function') {
+            const state = ytPlayer.getPlayerState();
+            if (state === 1) ytPlayer.pauseVideo();
+            else ytPlayer.playVideo();
+        } 
+        else {
+            const localAudio = document.getElementById('local-player');
+            if (localAudio) {
+                if (localAudio.paused) localAudio.play();
+                else localAudio.pause();
+            }
+        }
+    }
+});
+
 window.toggleRawPayload = function() {
     const body = document.getElementById('raw-payload-body');
     const icon = document.getElementById('raw-toggle-icon');
@@ -1148,3 +1181,84 @@ async function submitLyricsForm() {
         btn.innerHTML = '<span class="material-symbols-rounded">publish</span> Publish to Unison';
     }
 }
+
+
+window.openFeedbackHub = function() {
+    renderFeedbackList();
+    document.getElementById('feedback-dialog').showModal();
+};
+
+window.submitFeedback = async function() {
+    const input = document.getElementById('feedback-input');
+    const text = input.value.trim();
+    if (!text) return showToast('Please enter some feedback first.', 'error');
+
+    const user = JSON.parse(localStorage.getItem('unisonIdentity'));
+    const displayName = user ? user.displayName : 'Anonymous';
+    
+    input.disabled = true;
+
+    try {
+        const response = await fetch(FEEDBACK_API_URL, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                // This satisfies the Supabase JWT check
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
+            },
+            body: JSON.stringify({ text, username: displayName })
+        });
+
+        if (!response.ok) throw new Error("Failed to reach server");
+
+        input.value = '';
+        showToast('Feedback successfully sent to Unison developers!', 'success');
+        
+        await renderFeedbackList();
+
+    } catch (err) {
+        showToast('Server error: Could not transmit feedback.', 'error');
+    } finally {
+        input.disabled = false;
+    }
+};
+
+window.renderFeedbackList = async function() {
+    const list = document.getElementById('feedback-list');
+    if (!list) return;
+
+    list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem;"><span class="material-symbols-rounded spinner" style="margin-right:8px; font-size: 16px; vertical-align: middle;">sync</span> Loading database...</div>';
+
+    try {
+        const response = await fetch(FEEDBACK_API_URL, { 
+            method: 'GET',
+            headers: {
+                // Also needed for GET requests
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        
+        if (!response.ok) throw new Error("Failed to fetch");
+        
+        const feedbacks = await response.json();
+        
+        if (!feedbacks || !feedbacks.length) {
+            list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem;">No feedback left yet.</div>';
+            return;
+        }
+        
+        list.innerHTML = feedbacks.map(fb => {
+            const dateObj = new Date(fb.created_at);
+            const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+            return `
+            <div class="panel" style="padding: 12px; border-radius: 8px;">
+                <div style="font-size: 0.95rem; margin-bottom: 6px;">${fb.text}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">By <b>${fb.username || 'Anonymous'}</b> on ${dateStr}</div>
+            </div>
+            `;
+        }).join('');
+
+    } catch(err) {
+        list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem; color: var(--danger);">Failed to load feedback from server.</div>';
+    }
+};
