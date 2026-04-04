@@ -403,12 +403,26 @@ function copyRawLyrics() {
     }).catch(err => { showToast("Failed to copy text", "error"); });
 }
 
-// --- ACCOUNT PAGE ---
 function initAccountPage() {
     const user = JSON.parse(localStorage.getItem('unisonIdentity'));
     document.getElementById('acc-name').innerText = user.displayName || 'Unknown User';
+    
+    const avatarPreview = document.getElementById('acc-avatar-preview');
     const savedAvatar = localStorage.getItem('unisonAvatar');
-    if (savedAvatar) document.getElementById('acc-avatar-preview').src = savedAvatar;
+    
+    
+    if (user.keyId === DEFAULT_IDENTITY.keyId) {
+        
+        avatarPreview.src = 'https://better-lyrics.boidu.dev/icons/logo.svg';
+        
+        document.getElementById('avatar-settings-block').style.display = 'none';
+    } else {
+        
+        if (savedAvatar) {
+            avatarPreview.src = savedAvatar;
+        }
+    }
+
     
     const privateDetails = document.getElementById('private-details');
     if (user.keyId === DEFAULT_IDENTITY.keyId) {
@@ -1343,7 +1357,6 @@ async function logCurrentUser() {
     }
 }
 
-// 3. Updated Load Active Users
 async function loadActiveUsers() {
     const list = document.getElementById('active-users-list');
     if (!list) return;
@@ -1366,8 +1379,11 @@ async function loadActiveUsers() {
         
         list.innerHTML = users.map((u, index) => {
             const delay = index * 0.05; 
-            // Use the new red logo as the default if no custom avatar exists
-            const imgSrc = u.avatar_data || 'https://better-lyrics.boidu.dev/icons/logo.svg';
+
+            const isDefaultUser = u.key_id === DEFAULT_IDENTITY.keyId;
+            const imgSrc = isDefaultUser 
+                ? 'https://better-lyrics.boidu.dev/icons/logo.svg' 
+                : u.avatar_data || 'https://better-lyrics.boidu.dev/icons/logo.svg';
             
             return `
             <div class="user-card animate-fade-up" style="animation-delay: ${delay}s;">
