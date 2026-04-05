@@ -216,6 +216,11 @@ async function initSearchPage() {
     const resultsDiv = document.getElementById('search-results');
     const headerTitle = document.getElementById('search-header');
 
+    if (!defaultView || !searchView || !resultsDiv || !headerTitle) {
+        console.error('Search page markup is missing required elements.');
+        return;
+    }
+
     if (!query) {
         defaultView.style.display = 'block';
         searchView.style.display = 'none';
