@@ -20,7 +20,7 @@ Made with ❤️ by Walker 🇱🇰
 
 
 
-## 🔌 The Extension Workflow (Magic Integration)
+## 🧪 The Extension Workflow (Developer Integration)
 
 The core power of Unison comes from its ability to bridge the gap between YouTube and the Unison Database. 
 
