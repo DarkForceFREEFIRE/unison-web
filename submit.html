@@ -33,7 +33,7 @@
         </div>
 
         <div class="split-layout submit-layout">
-            <!-- Form Pane -->
+
             <div class="form-pane">
                 <div class="pane-content">
                     <div class="source-tabs">
@@ -70,11 +70,11 @@
                 <span class="material-symbols-rounded" style="font-size: 16px;">upload</span> Upload
             </button>
             <input type="file" id="lyrics-file-input" class="hidden" accept=".lrc,.elrc,.txt,.ttml" onchange="handleLyricsFileUpload(event)">
-            
+
             <button class="btn btn-small" onclick="fixLyricsFormatting()" title="Fixes missing spacing between words automatically">
                 <span class="material-symbols-rounded" style="font-size: 16px;">auto_fix_high</span> Auto-Fix Spacing
             </button>
-            
+
             <button class="btn btn-small" onclick="convertLyrics('ttml')">To TTML</button>
             <button class="btn btn-small" onclick="convertLyrics('elrc')">To ELRC</button>
         </div>
@@ -88,14 +88,12 @@
                 </div>
             </div>
 
-            <!-- Preview Pane -->
             <div class="preview-pane panel">
                 <div class="media-container">
                     <div id="yt-player-container">
                         <div id="yt-player"></div>
                     </div>
 
-                    <!-- Custom Audio Mini Player -->
                     <div id="custom-audio-player" class="hidden">
                         <div class="player-bg" id="player-bg"></div>
                         <div class="player-content">
@@ -119,12 +117,12 @@
                         </div>
                         <audio id="local-player" class="hidden"></audio>
                     </div>
-                    
+
                     <div id="media-placeholder" class="text-muted flex-center">
                         <span class="material-symbols-rounded" style="font-size: 48px; margin-bottom: 8px;">play_circle</span>
                         No Media Loaded
                     </div>
-                    
+
                     <div id="media-error-overlay" class="hidden">
                         <span class="material-symbols-rounded" style="font-size: 48px; color: var(--danger)">error</span>
                         <h4 style="margin-top: 16px;">Video Unavailable</h4>
