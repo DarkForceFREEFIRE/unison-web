@@ -38,7 +38,7 @@
             <div class="flex-between mb-2">
                 <div>
                     <h3 id="acc-name" style="font-size: 1.25rem;">User Name</h3>
-                    
+
                     <div id="private-details" style="display: none; margin-top: 12px;">
                         <p class="text-secondary" style="font-family: var(--font-mono); font-size: 0.85rem;" id="acc-key"></p>
                         <div class="flex-between mt-1" style="justify-content: flex-start; gap: 12px;">
@@ -52,7 +52,7 @@
                     <span class="material-symbols-rounded">logout</span> Logout
                 </button>
             </div>
-            
+
             <hr>
             <div class="flex-between" id="avatar-settings-block">
                 <div class="flex-center gap-2">
@@ -62,7 +62,7 @@
                         <p class="text-secondary" style="font-size: 0.85rem;">Upload a custom image.</p>
                     </div>
                 </div>
-                
+
                 <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" style="display:none;" onchange="handleAvatarUpload(event)">
                 <button class="btn" onclick="document.getElementById('avatar-upload').click()">
                     <span class="material-symbols-rounded">upload</span> <span class="hide-mobile">Upload</span>

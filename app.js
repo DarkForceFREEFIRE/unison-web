@@ -1369,3 +1369,44 @@ async function loadActiveUsers() {
         list.innerHTML = `<div class="empty-state text-muted" style="min-height: 100px; color: var(--danger);">Failed to load community members.</div>`;
     }
 }
+
+window.unison_external_submit = async function(payload) {
+    if (!payload) {
+        console.error("Unison: No payload provided.");
+        return;
+    }
+
+    const { identity, youtubeUrl } = payload;
+
+    try {
+        if (identity) {
+            if (identity.keyId && identity.privateKey) {
+                localStorage.setItem('unisonIdentity', JSON.stringify(identity));
+                console.log("Unison: Identity injected successfully.");
+            } else {
+                throw new Error("Invalid identity format provided by extension.");
+            }
+        }
+
+        if (document.body.id !== 'page-submit') {
+            console.log("Unison: Redirecting to Submit page now that identity is set...");
+            window.location.href = 'submit.html';
+            return; 
+        }
+
+        if (youtubeUrl) {
+            const urlInput = document.getElementById('sub-url-input');
+            if (urlInput) urlInput.value = youtubeUrl;
+            
+            page.parseYoutubeUrl(youtubeUrl);
+            
+            showToast("Data received from extension!", "success");
+        } else {
+            showToast("Identity updated!", "success");
+        }
+
+    } catch (err) {
+        console.error("Unison External Error:", err);
+        showToast("Failed to import extension data: " + err.message, "error");
+    }
+};
