@@ -19,6 +19,7 @@ Made with ❤️ by Walker 🇱🇰
 <img width="4374" height="2483" alt="BR" src="https://github.com/user-attachments/assets/af0e6446-946c-477e-830e-0143152b229b" />
 
 
+
 ## 🔌 The Extension Workflow (Magic Integration)
 
 The core power of Unison comes from its ability to bridge the gap between YouTube and the Unison Database. 
@@ -44,3 +45,12 @@ window.unison_external_submit({
     },
     youtubeUrl: "https://www.youtube.com/watch?v=VIDEO_ID"
 });
+```
+_____________________________________________________________________________
+
+**🛠 Technical Stack**
+
+Frontend: `Vanilla JavaScript (ES6+), HTML5, CSS3 (Custom Properties/Variables)`
+Cryptography: `Web Crypto API (ECDSA P-256) for secure signing`
+Deployment: `Vercel`
+Icons: `Google Material Symbols`
