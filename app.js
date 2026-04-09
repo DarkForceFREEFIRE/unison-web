@@ -59,8 +59,6 @@ window.alert = function(message) {
         showToast(message, 'success');
     }
 };
-
-// --- CRYPTO & API ---
 function canonicalJson(obj) {
     if (obj === null || obj === undefined) return 'null';
     if (typeof obj === 'boolean') return obj ? 'true' : 'false';
@@ -118,7 +116,6 @@ async function apiSignedAction(endpoint, payloadData) {
     });
 }
 
-// --- AUTH / GLOBAL ROUTING ---
 document.addEventListener("DOMContentLoaded", () => {
     const theme = localStorage.getItem('unisonTheme') || 'dark';
     document.documentElement.setAttribute('data-theme', theme);
@@ -149,7 +146,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-    // ---------------------------------------------
 
     const pageId = document.body.id;
     if (pageId === 'page-search') {
@@ -206,7 +202,7 @@ function updateGreetingTime() {
     timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · ' + now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
-// --- SEARCH & SUBMISSIONS PAGES ---
+
 async function initSearchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q');
@@ -298,7 +294,6 @@ async function initSubmissionsPage() {
     }
 }
 
-// --- DETAIL PAGE ---
 async function initDetailPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -468,10 +463,6 @@ function initAccountPage() {
 }
 
 
-// ==========================================
-// --- SUBMIT & DETAIL PAGE: MEDIA & SYNC LOGIC ---
-// ==========================================
-
 const page = {
     player: null,
     isPlayerReady: false,
@@ -509,7 +500,6 @@ const page = {
     },
 
     parseYoutubeUrl(url) {
-    // Fixed: Use single backslashes to escape forward slashes and special characters
     const regExp = /^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
     const match = url.match(regExp);
     const id = (match && match[7].length === 11) ? match[7] : null;
@@ -603,7 +593,6 @@ const page = {
         this.stopSyncLoop();
         window.currentActiveLineIndex = -1; 
         
-        // Memory caches so we aren't querying the DOM every frame
         let activeLineContainer = null;
         let activeWordElements = [];
         let lastTime = -1;
@@ -617,7 +606,6 @@ const page = {
                 if(localPlayer) time = localPlayer.currentTime;
             }
 
-            // OPTIMIZATION 1: Skip frame if time hasn't changed meaningfully
             if (Math.abs(time - lastTime) < 0.01) {
                 this.syncTimer = requestAnimationFrame(sync);
                 return;
@@ -628,8 +616,6 @@ const page = {
                 let activeIndex = -1;
                 const prev = window.currentActiveLineIndex;
 
-                // OPTIMIZATION 2: Fast-Path. Instead of searching the whole song, 
-                // just check if we are on the current line or naturally moved to the next line.
                 if (prev >= 0 && prev < window.parsedLines.length) {
                     const currentLine = window.parsedLines[prev];
                     const nextLine = window.parsedLines[prev + 1];
@@ -642,7 +628,6 @@ const page = {
                     }
                 }
 
-                // Fallback: If user scrubbed the video, do the full search to find where they went
                 if (activeIndex === -1) {
                     for (let i = window.parsedLines.length - 1; i >= 0; i--) {
                         if (time >= window.parsedLines[i].start) {
@@ -656,27 +641,21 @@ const page = {
                     const lineEnd = line.end || line.start + 10;
                     
                     if (time < lineEnd) {
-                        // --- LINE HAS CHANGED ---
                         if (window.currentActiveLineIndex !== activeIndex) {
-                            // Cleanup old active line
                             if (activeLineContainer) activeLineContainer.classList.remove('active');
                             else document.querySelectorAll('.lyric-line.active').forEach(l => l.classList.remove('active'));
                             
-                            // Setup new active line
                             activeLineContainer = document.getElementById(`line-${activeIndex}`);
 
                             if (activeLineContainer) {
                                 activeLineContainer.classList.add('active');
                                 
-                                // Natively center the element (fixes jumping caused by content-visibility unloading)
                                 activeLineContainer.scrollIntoView({
                                     behavior: 'smooth',
                                     block: 'center'
                                 });
 
 
-                                // OPTIMIZATION 3: Cache the DOM elements for words. 
-                                // We do this ONCE per line instead of 60 times a second.
                                 activeWordElements = [];
                                 if (line.words?.length) {
                                     for (let wi = 0; wi < line.words.length; wi++) {
@@ -687,10 +666,8 @@ const page = {
                             window.currentActiveLineIndex = activeIndex;
                         }
 
-                        // --- UPDATE WORDS WITHIN THE LINE ---
                         if (line.words?.length) {
                             for (let wi = 0; wi < line.words.length; wi++) {
-                                // Pull directly from our lightning-fast memory cache
                                 const wSpan = activeWordElements[wi]; 
                                 if (wSpan) {
                                     const shouldBeActive = time >= line.words[wi].start;
@@ -701,7 +678,6 @@ const page = {
                             }
                         }
                     } else {
-                        // Handle dead air / instrumental breaks
                         if (window.currentActiveLineIndex !== -1) {
                             if (activeLineContainer) activeLineContainer.classList.remove('active');
                             window.currentActiveLineIndex = -1;
@@ -712,11 +688,9 @@ const page = {
                 }
             }
             
-            // Loop!
             this.syncTimer = requestAnimationFrame(sync);
         };
 
-        // Kick it off
         this.syncTimer = requestAnimationFrame(sync);
     },
     
@@ -796,7 +770,6 @@ function initSubmitPage() {
     });
 }
 
-/// --- PARSERS & PREVIEW ENGINE ---
 function parseTimestamp(tsStr) {
     if (!tsStr) return 0;
     const parts = tsStr.replace(/[\[\]<>]/g, '').split(':');
@@ -1031,7 +1004,6 @@ function handleLyricsFileUpload(event) {
     event.target.value = '';
 }
 
-// --- FORMAT CONVERSIONS & FIXES ---
 function generatePayloadFromParsed(target) {
     if (target === 'ttml') {
         let xml = `<?xml version="1.0" encoding="utf-8"?>\n<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" ttp:timeBase="media" xml:lang="en">\n  <head>\n    <metadata>\n`;
@@ -1123,7 +1095,6 @@ window.fixLyricsFormatting = function() {
             for (let i = 0; i < line.words.length; i++) {
                 let w = line.words[i];
                 w.text = w.text.trim();
-                // Add a trailing space to every word except the final one
                 if (i < line.words.length - 1) w.text += ' ';
             }
             const newText = line.words.map(w => w.text).join('');
@@ -1232,7 +1203,6 @@ window.submitFeedback = async function() {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                // This satisfies the Supabase JWT check
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
             },
             body: JSON.stringify({ text, username: displayName })
@@ -1262,7 +1232,6 @@ window.renderFeedbackList = async function() {
         const response = await fetch(FEEDBACK_API_URL, { 
             method: 'GET',
             headers: {
-                // Also needed for GET requests
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
@@ -1292,9 +1261,7 @@ window.renderFeedbackList = async function() {
     }
 };
 
-// --- COMMUNITY MEMBERS & AVATARS ---
 
-// 1. Image Compressor/Resizer (Keeps DB fast)
 function handleAvatarUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1303,7 +1270,6 @@ function handleAvatarUpload(event) {
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            // Create a canvas to resize the image to 120x120
             const canvas = document.createElement('canvas');
             const MAX_WIDTH = 120;
             const MAX_HEIGHT = 120;
@@ -1311,24 +1277,20 @@ function handleAvatarUpload(event) {
             canvas.height = MAX_HEIGHT;
 
             const ctx = canvas.getContext('2d');
-            // Crop and center the image
             const size = Math.min(img.width, img.height);
             const x = (img.width - size) / 2;
             const y = (img.height - size) / 2;
             
             ctx.drawImage(img, x, y, size, size, 0, 0, MAX_WIDTH, MAX_HEIGHT);
 
-            // Compress to base64 WebP/JPEG
             const base64Data = canvas.toDataURL('image/jpeg', 0.8);
             
-            // Save locally and update UI
             localStorage.setItem('unisonAvatar', base64Data);
             const preview = document.getElementById('acc-avatar-preview');
             if (preview) preview.src = base64Data;
 
             showToast("Avatar updated successfully!", "success");
             
-            // Sync immediately with Supabase Edge Function
             logCurrentUser(); 
         };
         img.src = e.target.result;
@@ -1336,12 +1298,10 @@ function handleAvatarUpload(event) {
     reader.readAsDataURL(file);
 }
 
-// 2. Updated Log Current User
 async function logCurrentUser() {
     const user = JSON.parse(localStorage.getItem('unisonIdentity'));
     if (!user) return;
     
-    // Get custom avatar if it exists
     const avatarData = localStorage.getItem('unisonAvatar');
     
     try {
