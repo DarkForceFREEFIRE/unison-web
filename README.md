@@ -26,12 +26,12 @@
 
 We have completely overhauled the experience to focus on **precision** and **workflow efficiency**.
 
-- ** Brand New UI:** A sleek, modern, and distraction-free interface.
-- ** Intelligent Conversion:** Effortlessly transform **ELRC** (word-synced) lyrics into standard **LRC** (line-synced) or professional **TTML** formats.
-- ** Deep Discovery:** Advanced search functionality to find any song in the database instantly.
-- ** Portable Lyrics:** One-click download function to save your synced lyrics locally.
-- ** Quality Control:** Integrated Upvote/Downvote and Reporting systems to maintain database integrity.
-- ** Live Sync Preview:** Real-time lyric visualization in both the **Submission** and **Detail** views.
+- **Brand New UI:** A sleek, modern, and distraction-free interface.
+- **Intelligent Conversion:** Effortlessly transform **ELRC** (word-synced) lyrics into standard **LRC** (line-synced) or professional **TTML** formats.
+- **Deep Discovery:** Advanced search functionality to find any song in the database instantly.
+- **Portable Lyrics:** One-click download function to save your synced lyrics locally.
+- **Quality Control:** Integrated Upvote/Downvote and Reporting systems to maintain database integrity.
+- **Live Sync Preview:** Real-time lyric visualization in both the **Submission** and **Detail** views.
 
 ---
 
