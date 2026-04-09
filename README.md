@@ -1,4 +1,3 @@
-markdown
 <p align="center">
   <img src="https://github.com/user-attachments/assets/af0e6446-946c-477e-830e-0143152b229b" alt="Unison Web Banner" width="100%" />
 </p>
