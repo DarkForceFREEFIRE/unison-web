@@ -31,8 +31,7 @@
 
     <main class="animate-fade-up">
         <div class="detail-container">
-            
-            <!-- Unified Header Section -->
+
             <div class="header-card panel">
                 <div class="header-info">
                     <h2 id="det-title">Loading...</h2>
@@ -49,7 +48,6 @@
                 </div>
             </div>
 
-            <!-- Enhanced Action Bar -->
             <div class="action-bar" style="margin-bottom: 24px;">
                 <button class="btn" onclick="submitVote(1)">
                     <span class="material-symbols-rounded">thumb_up</span> Upvote
@@ -65,9 +63,8 @@
                 </button>
             </div>
 
-            <!-- Side-by-Side Player and Preview -->
             <div class="content-grid split-view">
-                <!-- Player on the Left -->
+
                 <div class="media-container panel" style="padding: 0; border: none;">
                     <div id="yt-player-container">
                         <div id="yt-player"></div>
@@ -83,7 +80,6 @@
                     </div>
                 </div>
 
-                <!-- Preview Panel on the Right -->
                 <div class="panel scrollable-panel" style="padding: 0;">
                     <div class="panel-header flex-between" style="border-bottom: 1px solid var(--border-color);">
                         <label class="section-label" style="margin: 0;">Synced Preview</label>
@@ -95,7 +91,6 @@
                 </div>
             </div>
 
-            <!-- Collapsible Raw Payload -->
             <div class="panel" style="padding: 0; border-radius: var(--radius-md); overflow: hidden; margin-top: 24px;">
                 <div class="panel-header flex-between" style="cursor: pointer; padding: 16px 24px; transition: background 0.2s;" onclick="toggleRawPayload()">
                     <label class="section-label" style="margin: 0; pointer-events: none; color: var(--text-primary); font-size: 0.85rem;">Raw Payload</label>
@@ -114,9 +109,8 @@
         </div>
     </main>
 
-    <!-- Report Dialog -->
     <dialog id="report-dialog">
-        <!-- Kept exactly the same -->
+
         <h3 style="margin-bottom: 16px; font-size: 1.5rem; letter-spacing: -0.02em;">Report Lyrics</h3>
         <p class="text-secondary mb-3" style="font-size: 0.9rem;">Help us keep Unison accurate by reporting incorrect or malicious uploads.</p>
         <div class="form-group">
