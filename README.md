@@ -50,7 +50,7 @@ _____________________________________________________________________________
 
 **🛠 Technical Stack**
 
-Frontend: Vanilla JavaScript (ES6+), HTML5, CSS3 (Custom Properties/Variables)
-Cryptography: Web Crypto API (ECDSA P-256) for secure signing
-Deployment: Vercel
-Icons: Google Material Symbols
+- Frontend: Vanilla JavaScript (ES6+), HTML5, CSS3 (Custom Properties/Variables)
+- Cryptography: Web Crypto API (ECDSA P-256) for secure signing
+- Deployment: Vercel
+- Icons: Google Material Symbols
