@@ -56,7 +56,7 @@ To implement this "Magic Redirect," your extension's content script must call th
 window.unison_external_submit({
     identity: { 
         "version": 1,
-        "keyId": "03917810b1b144867dccad8df5c6ae9633e0dfee799c7d4b0840891624a939c3",
+        "keyId": "03917810b1b1448...",
         "publicKey": { ... },
         "privateKey": { ... },
         "displayName": "Sarah"
