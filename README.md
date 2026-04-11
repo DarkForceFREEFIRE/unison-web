@@ -49,20 +49,52 @@ To implement this "Magic Redirect," your extension's content script must call th
 
 **Implementation Example:**
 ```javascript
-/**
- * Injected via chrome.scripting.executeScript
- * @param {Object} payload - The data to be processed by Unison
- */
-window.unison_external_submit({
-    identity: { 
-        "version": 1,
-        "keyId": "03917810b1b1448...",
-        "publicKey": { ... },
-        "privateKey": { ... },
-        "displayName": "Sarah"
-    },
-    youtubeUrl: "https://www.youtube.com/watch?v=KXMU5rWxtvU"
-});
+async function uploadToUnison(youtubeUrl) {
+    // Get user credentials from your extension's storage/auth
+    const userCredentials = {
+        keyId: "user_...",
+        privateKey: {
+            crv: "P-256",
+            d: "9ZDC9...",
+            ext: true,
+            key_ops: ["sign"],
+            kty: "EC",
+            x: "R4zIdpk_...",
+            y: "5pPq3zB..."
+        },
+        publicKey: {
+            crv: "P-256",
+            ext: true,
+            key_ops: ["verify"],
+            kty: "EC",
+            x: "R4zIdpk_...",
+            y: "5pPq3zBl..."
+        },
+        displayName: "Sarah"
+    };
+    
+    // Call your website's function
+    const unisonTab = await chrome.tabs.create({ 
+        url: "[https://unison.boidu.dev/submit.html](https://blrcunison.vercel.app/submit.html)" 
+    });
+    
+    // Wait for page to load, then inject
+    chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+        if (tabId === unisonTab.id && info.status === 'complete') {
+            chrome.scripting.executeScript({
+                target: { tabId: unisonTab.id },
+                func: (identity, url) => {
+                    window.unison_external_submit({
+                        identity: identity,
+                        youtubeUrl: url
+                    });
+                },
+                args: [userCredentials, youtubeUrl]
+            });
+            chrome.tabs.onUpdated.removeListener(listener);
+        }
+    });
+}
 ```
 
 ---
