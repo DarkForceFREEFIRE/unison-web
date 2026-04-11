@@ -73,9 +73,9 @@ async function uploadToUnison(youtubeUrl) {
         displayName: "Sarah"
     };
     
-    // Call your website's function
+    // Call the unison exported function
     const unisonTab = await chrome.tabs.create({ 
-        url: "https://unison.boidu.dev/submit.html" 
+        url: "(https://blrcunison.vercel.app/submit.html" 
     });
     
     // Wait for page to load, then inject
