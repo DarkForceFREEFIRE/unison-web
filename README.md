@@ -15,14 +15,14 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.1-blueviolet?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/version-v1.2-blueviolet?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/Made%20with-❤️-red?style=for-the-badge" alt="Made with Heart" />
   <img src="https://img.shields.io/badge/Location-Sri%20Lanka-orange?style=for-the-badge" alt="Location" />
 </p>
 
 ---
 
-## 🚀 What's New in v1.1
+## 🚀 What's New in v1.2
 
 We have completely overhauled the experience to focus on **precision** and **workflow efficiency**.
 
