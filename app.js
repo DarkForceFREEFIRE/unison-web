@@ -24,6 +24,8 @@ window.parsedLines = [];
 window.currentActiveLineIndex = -1;
 let hasWarnedELRC = false; 
 
+/* --- UTILITIES --- */
+
 function formatPlayerTime(seconds) {
     if (isNaN(seconds)) return "0:00";
     const m = Math.floor(seconds / 60);
@@ -59,6 +61,7 @@ window.alert = function(message) {
         showToast(message, 'success');
     }
 };
+
 function canonicalJson(obj) {
     if (obj === null || obj === undefined) return 'null';
     if (typeof obj === 'boolean') return obj ? 'true' : 'false';
@@ -77,6 +80,8 @@ function arrayBufferToBase64(buffer) {
     for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
     return window.btoa(binary);
 }
+
+/* --- CRYPTO & API --- */
 
 async function signPayload(privateKeyJwk, payloadObj) {
     const key = await window.crypto.subtle.importKey("jwk", privateKeyJwk, { name: "ECDSA", namedCurve: "P-256" }, true,["sign"]);
@@ -116,6 +121,8 @@ async function apiSignedAction(endpoint, payloadData) {
     });
 }
 
+/* --- CORE APP LIFECYCLE --- */
+
 document.addEventListener("DOMContentLoaded", () => {
     const theme = localStorage.getItem('unisonTheme') || 'dark';
     document.documentElement.setAttribute('data-theme', theme);
@@ -126,10 +133,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!user && !isLoginPage) { window.location.href = 'login.html'; return; }
     if (user && isLoginPage) { window.location.href = 'index.html'; return; }
 
-    
     const searchInput = document.getElementById('global-search');
     if (searchInput) {
-        
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('q')) {
             searchInput.value = urlParams.get('q');
@@ -138,11 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
         searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 const query = searchInput.value.trim();
-                if (query) {
-                    window.location.href = `index.html?q=${encodeURIComponent(query)}`;
-                } else {
-                    window.location.href = `index.html`;
-                }
+                window.location.href = query ? `index.html?q=${encodeURIComponent(query)}` : `index.html`;
             }
         });
     }
@@ -202,20 +203,17 @@ function updateGreetingTime() {
     timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' · ' + now.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
 }
 
+/* --- SEARCH & SUBMISSIONS --- */
 
 async function initSearchPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q');
-    
     const defaultView = document.getElementById('home-default-view');
     const searchView = document.getElementById('search-results-view');
     const resultsDiv = document.getElementById('search-results');
     const headerTitle = document.getElementById('search-header');
 
-    if (!defaultView || !searchView || !resultsDiv || !headerTitle) {
-        console.error('Search page markup is missing required elements.');
-        return;
-    }
+    if (!defaultView || !searchView || !resultsDiv || !headerTitle) return;
 
     if (!query) {
         defaultView.style.display = 'block';
@@ -230,13 +228,11 @@ async function initSearchPage() {
 
     try {
         const res = await apiFetch(`/search?q=${encodeURIComponent(query)}`);
-        const items = res.data ||[];
-        
+        const items = res.data || [];
         if (!items.length) {
             resultsDiv.innerHTML = `<div class="empty-state text-secondary animate-fade-up">No lyrics found for "${query}".</div>`;
             return;
         }
-
         resultsDiv.innerHTML = items.map(item => `
             <div class="card animate-fade-up" onclick="window.location.href='detail.html?id=${item.id || item.videoId}'">
                 <div>
@@ -262,17 +258,14 @@ async function initSearchPage() {
 async function initSubmissionsPage() {
     const resultsDiv = document.getElementById('search-results');
     resultsDiv.innerHTML = `<div class="empty-state text-secondary"><span class="material-symbols-rounded spinner" style="vertical-align: middle; margin-right:8px;">sync</span> Loading your submissions...</div>`;
-
     try {
         const user = JSON.parse(localStorage.getItem('unisonIdentity'));
         const res = await apiFetch(`/mine?limit=50`, { headers: { "x-key-id": user.keyId } });
-        const items = res.data ||[];
-        
+        const items = res.data || [];
         if (!items.length) {
             resultsDiv.innerHTML = `<div class="empty-state text-secondary animate-fade-up">You haven't submitted any lyrics yet.</div>`;
             return;
         }
-
         resultsDiv.innerHTML = items.map(item => `
             <div class="card animate-fade-up" onclick="window.location.href='detail.html?id=${item.id || item.videoId}'">
                 <div>
@@ -294,6 +287,8 @@ async function initSubmissionsPage() {
     }
 }
 
+/* --- DETAIL PAGE & INTERACTION --- */
+
 async function initDetailPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -314,7 +309,6 @@ async function initDetailPage() {
         document.getElementById('det-votecount').innerText = `${item.voteCount || 0} votes`;
         document.getElementById('det-raw').innerText = item.lyrics;
 
-        // Initialize player and interactive preview
         if (item.videoId && item.videoId !== 'local-file') {
             page.activeSource = 'yt';
             const placeholder = document.getElementById('media-placeholder');
@@ -366,7 +360,6 @@ async function submitReport() {
     const dialog = document.getElementById('report-dialog');
     const reason = document.getElementById('report-reason').value;
     const details = document.getElementById('report-details').value;
-
     if (!reason) return showToast("Please select a reason.", "error");
 
     try {
@@ -383,7 +376,7 @@ function downloadLyrics() {
     if (!window.currentLyricData) return;
     const { lyrics, song, artist, format } = window.currentLyricData;
     const ext = format === 'ttml' ? 'ttml' : (format === 'lrc' ? 'lrc' : 'txt');
-    const filename = `${artist || 'Unknown'} - ${song || 'Unknown'}.${ext}`.replace(/[\\\\/:*?"<>|]/g, '');
+    const filename = `${artist || 'Unknown'} - ${song || 'Unknown}.${ext}`.replace(/[\\\\/:*?"<>|]/g, '');
     const blob = new Blob([lyrics], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -406,24 +399,16 @@ function copyRawLyrics() {
 function initAccountPage() {
     const user = JSON.parse(localStorage.getItem('unisonIdentity'));
     document.getElementById('acc-name').innerText = user.displayName || 'Unknown User';
-    
     const avatarPreview = document.getElementById('acc-avatar-preview');
     const savedAvatar = localStorage.getItem('unisonAvatar');
     
-    
     if (user.keyId === DEFAULT_IDENTITY.keyId) {
-        
         avatarPreview.src = 'https://better-lyrics.boidu.dev/icons/logo.svg';
-        
         document.getElementById('avatar-settings-block').style.display = 'none';
     } else {
-        
-        if (savedAvatar) {
-            avatarPreview.src = savedAvatar;
-        }
+        if (savedAvatar) avatarPreview.src = savedAvatar;
     }
 
-    
     const privateDetails = document.getElementById('private-details');
     if (user.keyId === DEFAULT_IDENTITY.keyId) {
         privateDetails.style.display = 'none';
@@ -462,6 +447,7 @@ function initAccountPage() {
     });
 }
 
+/* --- PLAYER ENGINE --- */
 
 const page = {
     player: null,
@@ -500,20 +486,20 @@ const page = {
     },
 
     parseYoutubeUrl(url) {
-    const regExp = /^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-    const match = url.match(regExp);
-    const id = (match && match[7].length === 11) ? match[7] : null;
+        const regExp = /^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+        const match = url.match(regExp);
+        const id = (match && match[7].length === 11) ? match[7] : null;
 
-    if (id) {
-        document.getElementById('sub-vid').value = id;
-        document.getElementById('media-placeholder').classList.add('hidden');
-        document.getElementById('media-error-overlay').classList.add('hidden');
+        if (id) {
+            document.getElementById('sub-vid').value = id;
+            document.getElementById('media-placeholder').classList.add('hidden');
+            document.getElementById('media-error-overlay').classList.add('hidden');
 
-        if (this.isPlayerReady) ytPlayer.loadVideoById(id);
-        else this.videoIdToLoad = id;
+            if (this.isPlayerReady) ytPlayer.loadVideoById(id);
+            else this.videoIdToLoad = id;
 
-        this.fetchYouTubeMetadata(id);
-    }
+            this.fetchYouTubeMetadata(id);
+        }
     },
 
     async fetchYouTubeMetadata(id) {
@@ -541,7 +527,6 @@ const page = {
         const url = URL.createObjectURL(file);
         const audio = document.getElementById('local-player');
         audio.src = url;
-        
         document.getElementById('media-placeholder').classList.add('hidden');
         
         if (window.jsmediatags) {
@@ -550,10 +535,8 @@ const page = {
                     const tags = tag.tags;
                     const title = tags.title || file.name.split('.')[0];
                     const artist = tags.artist || "Unknown Artist";
-                    
                     document.getElementById('player-title').innerText = title;
                     document.getElementById('player-artist').innerText = artist;
-                    
                     if (!document.getElementById('sub-song').value) document.getElementById('sub-song').value = title;
                     if (!document.getElementById('sub-artist').value) document.getElementById('sub-artist').value = artist;
 
@@ -563,7 +546,6 @@ const page = {
                         let base64String = "";
                         for (let i = 0; i < data.length; i++) base64String += String.fromCharCode(data[i]);
                         const imgUrl = `data:${format};base64,${window.btoa(base64String)}`;
-                        
                         document.getElementById('player-cover').src = imgUrl;
                         document.getElementById('player-bg').style.backgroundImage = `url(${imgUrl})`;
                     } else {
@@ -592,7 +574,6 @@ const page = {
     startSyncLoop() {
         this.stopSyncLoop();
         window.currentActiveLineIndex = -1; 
-        
         let activeLineContainer = null;
         let activeWordElements = [];
         let lastTime = -1;
@@ -620,42 +601,28 @@ const page = {
                     const currentLine = window.parsedLines[prev];
                     const nextLine = window.parsedLines[prev + 1];
                     const currentEnd = currentLine.end || currentLine.start + 10;
-                    
-                    if (time >= currentLine.start && time < currentEnd) {
-                        activeIndex = prev;
-                    } else if (nextLine && time >= nextLine.start && time < (nextLine.end || nextLine.start + 10)) {
-                        activeIndex = prev + 1;
-                    }
+                    if (time >= currentLine.start && time < currentEnd) activeIndex = prev;
+                    else if (nextLine && time >= nextLine.start && time < (nextLine.end || nextLine.start + 10)) activeIndex = prev + 1;
                 }
 
                 if (activeIndex === -1) {
                     for (let i = window.parsedLines.length - 1; i >= 0; i--) {
-                        if (time >= window.parsedLines[i].start) {
-                            activeIndex = i; break;
-                        }
+                        if (time >= window.parsedLines[i].start) { activeIndex = i; break; }
                     }
                 }
 
                 if (activeIndex !== -1) {
                     const line = window.parsedLines[activeIndex];
                     const lineEnd = line.end || line.start + 10;
-                    
                     if (time < lineEnd) {
                         if (window.currentActiveLineIndex !== activeIndex) {
                             if (activeLineContainer) activeLineContainer.classList.remove('active');
                             else document.querySelectorAll('.lyric-line.active').forEach(l => l.classList.remove('active'));
                             
                             activeLineContainer = document.getElementById(`line-${activeIndex}`);
-
                             if (activeLineContainer) {
                                 activeLineContainer.classList.add('active');
-                                
-                                activeLineContainer.scrollIntoView({
-                                    behavior: 'smooth',
-                                    block: 'center'
-                                });
-
-
+                                activeLineContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 activeWordElements = [];
                                 if (line.words?.length) {
                                     for (let wi = 0; wi < line.words.length; wi++) {
@@ -687,10 +654,8 @@ const page = {
                     }
                 }
             }
-            
             this.syncTimer = requestAnimationFrame(sync);
         };
-
         this.syncTimer = requestAnimationFrame(sync);
     },
     
@@ -705,7 +670,6 @@ const page = {
 function onYouTubeIframeAPIReady() {
     let playerElementId = 'yt-player';
     if(!document.getElementById(playerElementId)) return;
-
     new YT.Player(playerElementId, {
         height: '100%', width: '100%', videoId: '',
         playerVars: { 'origin': window.location.origin, 'modestbranding': 1, 'playsinline': 1 },
@@ -733,22 +697,18 @@ function initSubmitPage() {
     const timeTot = document.getElementById('time-total');
 
     if(!audio || !playBtn) return;
-
     playBtn.addEventListener('click', () => {
         if(audio.paused) audio.play();
         else audio.pause();
     });
-
     audio.addEventListener('play', () => {
         playBtn.innerHTML = '<span class="material-symbols-rounded">pause</span>';
         page.startSyncLoop();
     });
-    
     audio.addEventListener('pause', () => {
         playBtn.innerHTML = '<span class="material-symbols-rounded">play_arrow</span>';
         page.stopSyncLoop();
     });
-
     audio.addEventListener('timeupdate', () => {
         const pct = (audio.currentTime / audio.duration) * 100;
         progress.style.width = pct + '%';
@@ -758,17 +718,17 @@ function initSubmitPage() {
             document.getElementById('sub-duration').value = Math.floor(audio.duration);
         }
     });
-
     audio.addEventListener('loadedmetadata', () => {
          if(audio.duration && audio.duration !== Infinity) timeTot.innerText = formatPlayerTime(audio.duration);
     });
-
     progressContainer.addEventListener('click', (e) => {
         const rect = progressContainer.getBoundingClientRect();
         const clickX = e.clientX - rect.left;
         audio.currentTime = (clickX / rect.width) * audio.duration;
     });
 }
+
+/* --- PARSING LOGIC (FIXED) --- */
 
 function parseTimestamp(tsStr) {
     if (!tsStr) return 0;
@@ -779,9 +739,10 @@ function parseTimestamp(tsStr) {
 
 function parseTTMLTime(tsStr) {
     if (!tsStr) return 0;
+    tsStr = tsStr.trim();
     if (tsStr.endsWith('ms')) return parseFloat(tsStr) / 1000;
     if (tsStr.endsWith('s')) return parseFloat(tsStr);
-    const parts = tsStr.split(':').map(parseFloat);
+    const parts = tsStr.split(':').map(p => parseFloat(p.trim()));
     if (parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
     else if (parts.length === 2) return (parts[0] * 60) + parts[1];
     else if (parts.length === 1) return parts[0];
@@ -796,70 +757,53 @@ function formatELRCTime(sec) {
 }
 
 function formatTTMLTime(sec) {
-    if(isNaN(sec)) sec = 0;
-    const h = Math.floor(sec / 3600).toString().padStart(2, '0');
-    const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
-    const s = (sec % 60).toFixed(3).padStart(6, '0');
-    return `${h}:${m}:${s}`;
+    if(isNaN(sec) || sec < 0) sec = 0;
+    const m = Math.floor(sec / 60);
+    const s = (sec % 60).toFixed(3);
+    return `${m}:${s.padStart(6, '0')}`;
 }
 
 function parseTTML(xmlText) {
     if(!xmlText.includes("</tt>")) xmlText += "</div></body></tt>"; 
-
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, "text/xml");
     const pTags = Array.from(xmlDoc.getElementsByTagName("p"));
-    let parsed =[];
+    let parsed = [];
 
     pTags.forEach(p => {
-        const start = parseTTMLTime(p.getAttribute("begin"));
-        const end = parseTTMLTime(p.getAttribute("end"));
+        const pStart = parseTTMLTime(p.getAttribute("begin"));
+        const pEnd = parseTTMLTime(p.getAttribute("end"));
         const agent = p.getAttribute("ttm:agent") || "v1";
-        let words =[];
+        let words = [];
         
-        function traverse(node, isBg) {
-            if (node.nodeName === 'span') {
-                const nodeBg = isBg || node.getAttribute("ttm:role") === "x-bg";
-                const hasChildSpans = Array.from(node.childNodes).some(n => n.nodeName === 'span');
-                
-                if (!hasChildSpans) {
-                    const b = node.getAttribute("begin");
-                    const e = node.getAttribute("end");
-                    const text = node.textContent;
-                    
-                    if (text.trim() !== '') {
-                        words.push({ 
-                            start: parseTTMLTime(b) || start, 
-                            end: parseTTMLTime(e) || null,
-                            text: text, 
-                            isBg: nodeBg 
-                        });
+        const allSpans = Array.from(p.querySelectorAll('span'));
+        allSpans.forEach(span => {
+            const isLeaf = !span.querySelector('span');
+            if (isLeaf) {
+                const sStart = parseTTMLTime(span.getAttribute("begin"));
+                const sEnd = parseTTMLTime(span.getAttribute("end"));
+                const text = span.textContent;
+                if (text.trim() !== '') {
+                    let isBg = false;
+                    let ancestor = span.parentElement;
+                    while (ancestor && ancestor !== p) {
+                        if (ancestor.nodeName === 'span' && ancestor.getAttribute("ttm:role") === "x-bg") {
+                            isBg = true; break;
+                        }
+                        ancestor = ancestor.parentElement;
                     }
-                } else {
-                    node.childNodes.forEach(child => traverse(child, nodeBg));
-                }
-            } else if (node.nodeType === Node.TEXT_NODE) {
-                const text = node.textContent;
-                // Capture spacing that sits directly between span tags
-                if (!text.trim() && text.length > 0 && words.length > 0) {
-                    let lastWord = words[words.length - 1];
-                    if (!lastWord.text.endsWith(' ')) lastWord.text += ' ';
-                } else if (text.trim()) {
-                    words.push({ start, end, text: text, isBg });
+                    words.push({ 
+                        start: sStart || pStart, 
+                        end: sEnd || pStart + 1,
+                        text: text, 
+                        isBg: isBg 
+                    });
                 }
             }
-        }
-
-        Array.from(p.childNodes).forEach(n => traverse(n, false));
-        const lineText = words.map(w => w.text).join('').trim();
-
-        parsed.push({ 
-            start, 
-            end: end || (words.length ? words[words.length-1].start + 2 : start + 5), 
-            agent,
-            text: lineText || p.textContent.trim().replace(/\s+/g, ' '), 
-            words 
         });
+
+        const lineText = words.length > 0 ? words.map(w => w.text).join('').trim() : p.textContent.trim().replace(/\s+/g, ' ');
+        parsed.push({ start: pStart, end: pEnd || (words.length ? words[words.length-1].end : pStart + 5), agent, text: lineText, words });
     });
     return parsed;
 }
@@ -867,49 +811,38 @@ function parseTTML(xmlText) {
 function parseEnhancedLRC(rawText) {
     const lines = rawText.split('\n');
     let parsed =[];
-    
     lines.forEach(line => {
         if (line.match(/^\[[a-zA-Z]+:/) && !line.match(/^\[(v\d+|[A-Za-z0-9_]+):/)) return;
         const matchLine = line.match(/^\[(\d{2}:\d{2}\.\d{2,3})\](?:([A-Za-z0-9_]+):)?(.*)/);
-        
         if (matchLine) {
             const startTime = parseTimestamp(matchLine[1]);
             const agent = matchLine[2] || "v1";
-            let content = matchLine[3];
-            content = content.replace(/\[bg:(.*?)\]/g, '($1)');
-
-            const words =[];
+            let content = matchLine[3].replace(/\[bg:(.*?)\]/g, '($1)');
+            const words = [];
             let currentChunk = "";
             let isBg = false;
 
             for(let i=0; i<content.length; i++) {
                 if(content[i] === '(') {
                     if(currentChunk) parseChunk(currentChunk, false, words, startTime);
-                    currentChunk = "";
-                    isBg = true;
+                    currentChunk = ""; isBg = true;
                 } else if (content[i] === ')') {
                     if(currentChunk) parseChunk(currentChunk, true, words, startTime);
-                    currentChunk = "";
-                    isBg = false;
-                } else {
-                    currentChunk += content[i];
-                }
+                    currentChunk = ""; isBg = false;
+                } else { currentChunk += content[i]; }
             }
             if(currentChunk) parseChunk(currentChunk, isBg, words, startTime);
 
             const plainText = content.replace(/<[^>]+>/g, '').replace(/[\(\)]/g, '').trim();
-            const validWords =[];
-            
+            const validWords = [];
             for (let i = 0; i < words.length; i++) {
                 const w = words[i];
                 if (w.text.trim() !== '') validWords.push(w);
                 else if (validWords.length > 0) validWords[validWords.length - 1].end = w.start;
             }
-
             parsed.push({ start: startTime, text: plainText, words: validWords, agent });
         }
     });
-
     for (let i = 0; i < parsed.length; i++) {
         let e = parsed[i].start + 8;
         if(parsed[i].words.length > 0) {
@@ -937,40 +870,32 @@ function renderPreview(containerId = 'sync-preview-content') {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
-    
     if (!window.parsedLines || window.parsedLines.length === 0) {
         container.innerHTML = `<div class="empty-state text-muted">Invalid format or empty lyrics</div>`;
         return;
     }
-
     window.parsedLines.forEach((line, i) => {
         const div = document.createElement('div');
         div.className = 'lyric-line';
         if(line.agent && line.agent !== 'v1') div.classList.add(`agent-${line.agent}`);
         div.id = `line-${i}`;
-
         if (line.words && line.words.length > 0) {
             const mainContainer = document.createElement('div');
             mainContainer.className = 'main-vocals';
             const bgContainer = document.createElement('div');
             bgContainer.className = 'bg-vocals-container';
-
             line.words.forEach((w, wi) => {
                 const span = document.createElement('span');
                 span.className = 'lyric-word';
                 if(w.isBg) span.classList.add('bg-vocal');
                 span.id = `word-${i}-${wi}`;
                 span.innerText = w.text;
-                
                 if (w.isBg) bgContainer.appendChild(span);
                 else mainContainer.appendChild(span);
             });
-
             if (mainContainer.childNodes.length > 0) div.appendChild(mainContainer);
             if (bgContainer.childNodes.length > 0) div.appendChild(bgContainer);
-        } else {
-            div.innerText = line.text;
-        }
+        } else { div.innerText = line.text; }
         container.appendChild(div);
     });
 }
@@ -981,13 +906,11 @@ function updateSyncPreview() {
         document.getElementById('sync-preview-content').innerHTML = `<div class="empty-state text-muted">Lyrics will animate here</div>`;
         return;
     }
-    
     const isTTML = text.trim().startsWith('<?xml') || text.trim().startsWith('<tt');
     if (!isTTML && !hasWarnedELRC) {
         showToast("We highly recommend using TTML Format instead of LRC/ELRC for precise accuracy.", "info");
         hasWarnedELRC = true; 
     }
-
     window.parsedLines = isTTML ? parseTTML(text) : parseEnhancedLRC(text);
     renderPreview();
 }
@@ -1005,9 +928,9 @@ function handleLyricsFileUpload(event) {
 }
 
 function generatePayloadFromParsed(target) {
+    const subLyricsInput = document.getElementById('sub-lyrics');
     if (target === 'ttml') {
         let xml = `<?xml version="1.0" encoding="utf-8"?>\n<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" ttp:timeBase="media" xml:lang="en">\n  <head>\n    <metadata>\n`;
-        
         let agents = new Set(window.parsedLines.map(l => l.agent || 'v1'));
         agents.forEach(a => {
             const name = a === 'v1' ? 'Lead' : `Vocal ${a.replace('v', '')}`;
@@ -1018,51 +941,49 @@ function generatePayloadFromParsed(target) {
         window.parsedLines.forEach(line => {
             xml += `      <p begin="${formatTTMLTime(line.start)}" end="${formatTTMLTime(line.end)}" ttm:agent="${line.agent || 'v1'}">`;
             if (line.words.length > 0) {
-                let insideBg = false;
-                line.words.forEach((word, i) => {
-                    const wordEnd = word.end ? word.end : (line.words[i+1] ? line.words[i+1].start : line.end);
-                    const safeText = word.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    if (!safeText.trim() && safeText.length === 0) return;
-
-                    if (word.isBg && !insideBg) { xml += `<span ttm:role="x-bg">`; insideBg = true; }
-                    if (!word.isBg && insideBg) { xml += `</span>`; insideBg = false; }
-                    
-                    xml += `<span begin="${formatTTMLTime(word.start)}" end="${formatTTMLTime(wordEnd)}">${safeText}</span>`;
-                });
-                if (insideBg) xml += `</span>`;
+                let i = 0;
+                while (i < line.words.length) {
+                    if (line.words[i].isBg) {
+                        xml += `<span ttm:role="x-bg">`;
+                        while (i < line.words.length && line.words[i].isBg) {
+                            const w = line.words[i];
+                            xml += `<span begin="${formatTTMLTime(w.start)}" end="${formatTTMLTime(w.end)}">${w.text.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</span>`;
+                            i++;
+                        }
+                        xml += `</span>`;
+                    } else {
+                        const w = line.words[i];
+                        xml += `<span begin="${formatTTMLTime(w.start)}" end="${formatTTMLTime(w.end)}">${w.text.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</span>`;
+                        i++;
+                    }
+                }
             } else {
                 xml += line.text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             }
             xml += `</p>\n`;
         });
-
         xml += `    </div>\n  </body>\n</tt>`;
-        document.getElementById('sub-lyrics').value = xml;
+        subLyricsInput.value = xml;
     } else if (target === 'elrc') {
         let elrcStr = "";
         window.parsedLines.forEach(line => {
             const ts = formatELRCTime(line.start);
             elrcStr += `[${ts}]`;
-            
             if (line.agent && line.agent !== 'v1') elrcStr += `${line.agent}:`;
-
             if (line.words.length > 0) {
                 let insideBg = false;
                 line.words.forEach((w) => {
                     if (w.isBg && !insideBg) { elrcStr += "[bg:"; insideBg = true; }
                     if (!w.isBg && insideBg) { elrcStr += "]"; insideBg = false; }
-                    
                     const safeText = w.text;
                     const endTs = w.end ? `<${formatELRCTime(w.end)}>` : '';
                     elrcStr += `<${formatELRCTime(w.start)}>${safeText}${endTs}`;
                 });
                 if(insideBg) elrcStr += "]";
-            } else {
-                elrcStr += line.text;
-            }
+            } else { elrcStr += line.text; }
             elrcStr += "\n";
         });
-        document.getElementById('sub-lyrics').value = elrcStr.trim();
+        subLyricsInput.value = elrcStr.trim();
     }
     updateSyncPreview();
 }
@@ -1070,12 +991,9 @@ function generatePayloadFromParsed(target) {
 function convertLyrics(target) {
     const rawText = document.getElementById('sub-lyrics').value;
     if (!rawText.trim()) return showToast("Please paste or upload lyrics first.", "error");
-
     const isCurrentTTML = rawText.trim().startsWith('<?xml') || rawText.trim().startsWith('<tt');
     window.parsedLines = isCurrentTTML ? parseTTML(rawText) : parseEnhancedLRC(rawText);
-
     if (!window.parsedLines.length) return showToast("Could not extract valid lyric timings.", "error");
-    
     generatePayloadFromParsed(target);
     showToast(`Converted to standard ${target.toUpperCase()} Format!`, "success");
 }
@@ -1083,10 +1001,8 @@ function convertLyrics(target) {
 window.fixLyricsFormatting = function() {
     const rawText = document.getElementById('sub-lyrics').value;
     if (!rawText.trim()) return showToast("Please paste or upload lyrics first.", "error");
-
     const isTTML = rawText.trim().startsWith('<?xml') || rawText.trim().startsWith('<tt');
     window.parsedLines = isTTML ? parseTTML(rawText) : parseEnhancedLRC(rawText);
-
     if (!window.parsedLines || !window.parsedLines.length) return showToast("No parsed lyrics to fix.", "error");
 
     let fixedCount = 0;
@@ -1113,23 +1029,206 @@ window.fixLyricsFormatting = function() {
     }
 }
 
+/* --- SUBMISSION & FEEDBACK --- */
+
+async function submitLyricsForm() {
+    const vid = document.getElementById('sub-vid').value.trim();
+    const song = document.getElementById('sub-song').value.trim();
+    const artist = document.getElementById('sub-artist').value.trim();
+    const durStr = document.getElementById('sub-duration').value.trim();
+    const lyrics = document.getElementById('sub-lyrics').value.trim();
+    const btn = document.getElementById('submit-btn');
+
+    if(!vid && page.activeSource === 'yt') return showToast("Please provide a valid YouTube URL.", "error");
+    if(!song || !artist || !durStr || !lyrics) return showToast("Please fill in all required fields.", "error");
+    let format = (lyrics.trim().startsWith('<?xml') || lyrics.trim().startsWith('<tt')) ? 'ttml' : 'lrc';
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-rounded spinner">sync</span> Publishing...';
+        const payload = {
+            videoId: vid || "local-file", song, artist, lyrics, format,
+            duration: parseInt(durStr, 10), language: "en",
+            syncType: format === 'ttml' ? 'richsync' : 'linesync'
+        };
+        await apiSignedAction('/submit', payload);
+        showToast("Successfully published!", "success");
+        setTimeout(() => window.location.href = 'index.html', 1500);
+    } catch(e) {
+        showToast("Submission failed: " + e.message, "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-rounded">publish</span> Publish to Unison';
+    }
+}
+
+window.openFeedbackHub = function() {
+    renderFeedbackList();
+    document.getElementById('feedback-dialog').showModal();
+};
+
+window.submitFeedback = async function() {
+    const input = document.getElementById('feedback-input');
+    const text = input.value.trim();
+    if (!text) return showToast('Please enter some feedback first.', 'error');
+    const user = JSON.parse(localStorage.getItem('unisonIdentity'));
+    const displayName = user ? user.displayName : 'Anonymous';
+    input.disabled = true;
+    try {
+        const response = await fetch(FEEDBACK_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({ text, username: displayName })
+        });
+        if (!response.ok) throw new Error("Failed to reach server");
+        input.value = '';
+        showToast('Feedback successfully sent to Unison developers!', 'success');
+        await renderFeedbackList();
+    } catch (err) {
+        showToast('Server error: Could not transmit feedback.', 'error');
+    } finally {
+        input.disabled = false;
+    }
+};
+
+window.renderFeedbackList = async function() {
+    const list = document.getElementById('feedback-list');
+    if (!list) return;
+    list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem;"><span class="material-symbols-rounded spinner" style="margin-right:8px; font-size: 16px; vertical-align: middle;">sync</span> Loading database...</div>';
+    try {
+        const response = await fetch(FEEDBACK_API_URL, { 
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (!response.ok) throw new Error("Failed to fetch");
+        const feedbacks = await response.json();
+        if (!feedbacks || !feedbacks.length) {
+            list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem;">No feedback left yet.</div>';
+            return;
+        }
+        list.innerHTML = feedbacks.map(fb => {
+            const dateObj = new Date(fb.created_at);
+            const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+            return `
+            <div class="panel" style="padding: 12px; border-radius: 8px;">
+                <div style="font-size: 0.95rem; margin-bottom: 6px;">${fb.text}</div>
+                <div class="text-muted" style="font-size: 0.75rem;">By <b>${fb.username || 'Anonymous'}</b> on ${dateStr}</div>
+            </div>`;
+        }).join('');
+    } catch(err) {
+        list.innerHTML = `<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem; color: var(--danger);">Failed to load feedback from server.</div>`;
+    }
+};
+
+function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 120; const MAX_HEIGHT = 120;
+            canvas.width = MAX_WIDTH; canvas.height = MAX_HEIGHT;
+            const ctx = canvas.getContext('2d');
+            const size = Math.min(img.width, img.height);
+            const x = (img.width - size) / 2;
+            const y = (img.height - size) / 2;
+            ctx.drawImage(img, x, y, size, size, 0, 0, MAX_WIDTH, MAX_HEIGHT);
+            const base64Data = canvas.toDataURL('image/jpeg', 0.8);
+            localStorage.setItem('unisonAvatar', base64Data);
+            const preview = document.getElementById('acc-avatar-preview');
+            if (preview) preview.src = base64Data;
+            showToast("Avatar updated successfully!", "success");
+            logCurrentUser(); 
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function logCurrentUser() {
+    const user = JSON.parse(localStorage.getItem('unisonIdentity'));
+    if (!user) return;
+    const avatarData = localStorage.getItem('unisonAvatar');
+    try {
+        await fetch(USERS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+            body: JSON.stringify({ username: user.displayName || 'Unknown User', keyId: user.keyId, avatarData: avatarData || null })
+        });
+    } catch(e) { console.warn("Could not log user presence", e); }
+}
+
+async function loadActiveUsers() {
+    const list = document.getElementById('active-users-list');
+    if (!list) return;
+    try {
+        logCurrentUser();
+        const response = await fetch(USERS_API_URL, { 
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+        });
+        if (!response.ok) throw new Error("Failed to fetch users");
+        const users = await response.json();
+        if (!users || !users.length) {
+            list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px;">No other members online right now.</div>';
+            return;
+        }
+        list.innerHTML = users.map((u, index) => {
+            const delay = index * 0.05; 
+            const isDefaultUser = u.key_id === DEFAULT_IDENTITY.keyId;
+            const imgSrc = isDefaultUser ? 'https://better-lyrics.boidu.dev/icons/logo.svg' : (u.avatar_data || 'https://better-lyrics.boidu.dev/icons/logo.svg');
+            return `
+            <div class="user-card animate-fade-up" style="animation-delay: ${delay}s;">
+                <div class="user-avatar"><img src="${imgSrc}" alt="${u.username}"></div>
+                <div class="user-info">
+                    <div class="user-name">${u.username || 'Anonymous'}</div>
+                    <div class="user-status"><div class="status-dot"></div> Active</div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(err) {
+        list.innerHTML = `<div class="empty-state text-muted" style="min-height: 100px; color: var(--danger);">Failed to load community members.</div>`;
+    }
+}
+
+window.unison_external_submit = async function(payload) {
+    if (!payload) { console.error("Unison: No payload provided."); return; }
+    const { identity, youtubeUrl } = payload;
+    try {
+        if (identity) {
+            if (identity.keyId && identity.privateKey) {
+                localStorage.setItem('unisonIdentity', JSON.stringify(identity));
+                console.log("Unison: Identity injected successfully.");
+            } else { throw new Error("Invalid identity format provided by extension."); }
+        }
+        if (document.body.id !== 'page-submit') {
+            window.location.href = 'submit.html';
+            return; 
+        }
+        if (youtubeUrl) {
+            const urlInput = document.getElementById('sub-url-input');
+            if (urlInput) urlInput.value = youtubeUrl;
+            page.parseYoutubeUrl(youtubeUrl);
+            showToast("Data received from extension!", "success");
+        } else { showToast("Identity updated!", "success"); }
+    } catch (err) {
+        console.error("Unison External Error:", err);
+        showToast("Failed to import extension data: " + err.message, "error");
+    }
+};
 
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
     if (e.code === 'Space') {
         e.preventDefault(); 
         if (page && page.activeSource === 'yt' && ytPlayer && typeof ytPlayer.getPlayerState === 'function') {
             const state = ytPlayer.getPlayerState();
-            if (state === 1) ytPlayer.pauseVideo();
-            else ytPlayer.playVideo();
-        } 
-        else {
+            (state === 1) ? ytPlayer.pauseVideo() : ytPlayer.playVideo();
+        } else {
             const localAudio = document.getElementById('local-player');
-            if (localAudio) {
-                if (localAudio.paused) localAudio.play();
-                else localAudio.pause();
-            }
+            if (localAudio) { (localAudio.paused) ? localAudio.play() : localAudio.pause(); }
         }
     }
 });
@@ -1145,268 +1244,3 @@ window.toggleRawPayload = function() {
         icon.innerText = 'expand_more';
     }
 }
-
-async function submitLyricsForm() {
-    const vid = document.getElementById('sub-vid').value.trim();
-    const song = document.getElementById('sub-song').value.trim();
-    const artist = document.getElementById('sub-artist').value.trim();
-    const durStr = document.getElementById('sub-duration').value.trim();
-    const lyrics = document.getElementById('sub-lyrics').value.trim();
-    const btn = document.getElementById('submit-btn');
-
-    if(!vid && page.activeSource === 'yt') return showToast("Please provide a valid YouTube URL.", "error");
-    if(!song || !artist || !durStr || !lyrics) return showToast("Please fill in all required fields.", "error");
-    
-    let format = (lyrics.trim().startsWith('<?xml') || lyrics.trim().startsWith('<tt')) ? 'ttml' : 'lrc';
-
-    try {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-symbols-rounded spinner">sync</span> Publishing...';
-
-        const payload = {
-            videoId: vid || "local-file", 
-            song, artist, lyrics, format,
-            duration: parseInt(durStr, 10),
-            language: "en",
-            syncType: format === 'ttml' ? 'richsync' : 'linesync'
-        };
-
-        await apiSignedAction('/submit', payload);
-        showToast("Successfully published!", "success");
-        setTimeout(() => window.location.href = 'index.html', 1500);
-    } catch(e) {
-        showToast("Submission failed: " + e.message, "error");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-rounded">publish</span> Publish to Unison';
-    }
-}
-
-
-window.openFeedbackHub = function() {
-    renderFeedbackList();
-    document.getElementById('feedback-dialog').showModal();
-};
-
-window.submitFeedback = async function() {
-    const input = document.getElementById('feedback-input');
-    const text = input.value.trim();
-    if (!text) return showToast('Please enter some feedback first.', 'error');
-
-    const user = JSON.parse(localStorage.getItem('unisonIdentity'));
-    const displayName = user ? user.displayName : 'Anonymous';
-    
-    input.disabled = true;
-
-    try {
-        const response = await fetch(FEEDBACK_API_URL, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
-            },
-            body: JSON.stringify({ text, username: displayName })
-        });
-
-        if (!response.ok) throw new Error("Failed to reach server");
-
-        input.value = '';
-        showToast('Feedback successfully sent to Unison developers!', 'success');
-        
-        await renderFeedbackList();
-
-    } catch (err) {
-        showToast('Server error: Could not transmit feedback.', 'error');
-    } finally {
-        input.disabled = false;
-    }
-};
-
-window.renderFeedbackList = async function() {
-    const list = document.getElementById('feedback-list');
-    if (!list) return;
-
-    list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem;"><span class="material-symbols-rounded spinner" style="margin-right:8px; font-size: 16px; vertical-align: middle;">sync</span> Loading database...</div>';
-
-    try {
-        const response = await fetch(FEEDBACK_API_URL, { 
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-            }
-        });
-        
-        if (!response.ok) throw new Error("Failed to fetch");
-        
-        const feedbacks = await response.json();
-        
-        if (!feedbacks || !feedbacks.length) {
-            list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem;">No feedback left yet.</div>';
-            return;
-        }
-        
-        list.innerHTML = feedbacks.map(fb => {
-            const dateObj = new Date(fb.created_at);
-            const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-            return `
-            <div class="panel" style="padding: 12px; border-radius: 8px;">
-                <div style="font-size: 0.95rem; margin-bottom: 6px;">${fb.text}</div>
-                <div class="text-muted" style="font-size: 0.75rem;">By <b>${fb.username || 'Anonymous'}</b> on ${dateStr}</div>
-            </div>
-            `;
-        }).join('');
-
-    } catch(err) {
-        list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px; font-size: 0.9rem; color: var(--danger);">Failed to load feedback from server.</div>';
-    }
-};
-
-
-function handleAvatarUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 120;
-            const MAX_HEIGHT = 120;
-            canvas.width = MAX_WIDTH;
-            canvas.height = MAX_HEIGHT;
-
-            const ctx = canvas.getContext('2d');
-            const size = Math.min(img.width, img.height);
-            const x = (img.width - size) / 2;
-            const y = (img.height - size) / 2;
-            
-            ctx.drawImage(img, x, y, size, size, 0, 0, MAX_WIDTH, MAX_HEIGHT);
-
-            const base64Data = canvas.toDataURL('image/jpeg', 0.8);
-            
-            localStorage.setItem('unisonAvatar', base64Data);
-            const preview = document.getElementById('acc-avatar-preview');
-            if (preview) preview.src = base64Data;
-
-            showToast("Avatar updated successfully!", "success");
-            
-            logCurrentUser(); 
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-async function logCurrentUser() {
-    const user = JSON.parse(localStorage.getItem('unisonIdentity'));
-    if (!user) return;
-    
-    const avatarData = localStorage.getItem('unisonAvatar');
-    
-    try {
-        await fetch(USERS_API_URL, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
-            },
-            body: JSON.stringify({ 
-                username: user.displayName || 'Unknown User',
-                keyId: user.keyId,
-                avatarData: avatarData || null
-            })
-        });
-    } catch(e) {
-        console.warn("Could not log user presence", e);
-    }
-}
-
-async function loadActiveUsers() {
-    const list = document.getElementById('active-users-list');
-    if (!list) return;
-
-    try {
-        logCurrentUser();
-
-        const response = await fetch(USERS_API_URL, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-        });
-
-        if (!response.ok) throw new Error("Failed to fetch users");
-        const users = await response.json();
-        
-        if (!users || !users.length) {
-            list.innerHTML = '<div class="empty-state text-muted" style="min-height: 100px;">No other members online right now.</div>';
-            return;
-        }
-        
-        list.innerHTML = users.map((u, index) => {
-            const delay = index * 0.05; 
-
-            const isDefaultUser = u.key_id === DEFAULT_IDENTITY.keyId;
-            const imgSrc = isDefaultUser 
-                ? 'https://better-lyrics.boidu.dev/icons/logo.svg' 
-                : u.avatar_data || 'https://better-lyrics.boidu.dev/icons/logo.svg';
-            
-            return `
-            <div class="user-card animate-fade-up" style="animation-delay: ${delay}s;">
-                <div class="user-avatar">
-                    <img src="${imgSrc}" alt="${u.username}">
-                </div>
-                <div class="user-info">
-                    <div class="user-name">${u.username || 'Anonymous'}</div>
-                    <div class="user-status">
-                        <div class="status-dot"></div> Active
-                    </div>
-                </div>
-            </div>
-            `;
-        }).join('');
-
-    } catch(err) {
-        list.innerHTML = `<div class="empty-state text-muted" style="min-height: 100px; color: var(--danger);">Failed to load community members.</div>`;
-    }
-}
-
-window.unison_external_submit = async function(payload) {
-    if (!payload) {
-        console.error("Unison: No payload provided.");
-        return;
-    }
-
-    const { identity, youtubeUrl } = payload;
-
-    try {
-        if (identity) {
-            if (identity.keyId && identity.privateKey) {
-                localStorage.setItem('unisonIdentity', JSON.stringify(identity));
-                console.log("Unison: Identity injected successfully.");
-            } else {
-                throw new Error("Invalid identity format provided by extension.");
-            }
-        }
-
-        if (document.body.id !== 'page-submit') {
-            console.log("Unison: Redirecting to Submit page now that identity is set...");
-            window.location.href = 'submit.html';
-            return; 
-        }
-
-        if (youtubeUrl) {
-            const urlInput = document.getElementById('sub-url-input');
-            if (urlInput) urlInput.value = youtubeUrl;
-            
-            page.parseYoutubeUrl(youtubeUrl);
-            
-            showToast("Data received from extension!", "success");
-        } else {
-            showToast("Identity updated!", "success");
-        }
-
-    } catch (err) {
-        console.error("Unison External Error:", err);
-        showToast("Failed to import extension data: " + err.message, "error");
-    }
-};
