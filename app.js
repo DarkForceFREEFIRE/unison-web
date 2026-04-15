@@ -516,24 +516,36 @@ const page = {
     }
     },
 
-    async fetchYouTubeMetadata(id) {
-        try {
-            const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
-            if (!res.ok) return;
-            const data = await res.json();
-            
-            let title = data.title || "";
-            let artist = data.author_name || ""; 
+async fetchYouTubeMetadata(id) {
+    try {
+        const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        let title = data.title || "";
+        let author = data.author_name || ""; 
 
-            const songInput = document.getElementById('sub-song');
-            const artistInput = document.getElementById('sub-artist');
+        const songInput = document.getElementById('sub-song');
+        const artistInput = document.getElementById('sub-artist');
+
+        if (title.includes(" - ")) {
+            const parts = title.split(" - ");
             
+            const extractedArtist = parts[0].trim();
+            const extractedSong = parts[1].trim();
+
+            if (!artistInput.value) artistInput.value = extractedArtist;
+            if (!songInput.value) songInput.value = extractedSong;
+        } else {
             if (!songInput.value) songInput.value = title;
-            if (!artistInput.value) artistInput.value = artist.replace(" - Topic", "");
-            
-            showToast("YouTube metadata extracted automatically!", "info");
-        } catch (err) {}
-    },
+            if (!artistInput.value) artistInput.value = author.replace(" - Topic", "").trim();
+        }
+        
+        showToast("YouTube metadata extracted automatically!", "info");
+    } catch (err) {
+        console.error("Metadata extraction error:", err);
+    }
+},
 
     loadLocalFile(event) {
         const file = event.target.files[0];
