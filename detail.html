@@ -49,17 +49,17 @@
             </div>
 
             <div class="action-bar" style="margin-bottom: 24px;">
-                <button class="btn" onclick="submitVote(1)">
-                    <span class="material-symbols-rounded">thumb_up</span> Upvote
+                <button id="det-upvote" class="btn" onclick="submitVote(1)">
+                    <span class="material-symbols-rounded">thumb_up</span><span id="label-upvote">Upvote</span>
                 </button>
-                <button class="btn" onclick="submitVote(-1)">
-                    <span class="material-symbols-rounded">thumb_down</span> Downvote
+                <button id="det-downvote" class="btn" onclick="submitVote(-1)">
+                    <span class="material-symbols-rounded">thumb_down</span><span id="label-downvote">Downvote</span>
                 </button>
                 <button class="btn" onclick="downloadLyrics()">
-                    <span class="material-symbols-rounded">download</span> Download File
+                    <span class="material-symbols-rounded">download</span><span id="label-download">Download File</span>
                 </button>
                 <button class="btn btn-danger" onclick="document.getElementById('report-dialog').showModal()">
-                    <span class="material-symbols-rounded">flag</span> Report Issue
+                    <span class="material-symbols-rounded">flag</span><span id="label-report">Report Issue</span>
                 </button>
             </div>
 

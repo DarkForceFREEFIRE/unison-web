@@ -24,6 +24,9 @@
     --btn-bg: rgba(255, 255, 255, 0.1);
     --btn-hover: rgba(255, 255, 255, 0.2);
     
+    --btn-voted-bg: rgba(0, 128, 255, 0.1);
+    --btn-voted-hover: rgba(0, 128, 255, 0.2);
+    
     --accent: #6470dc; 
     --accentlrc: rgb(204, 94, 226); 
     --accent-hover: #818cf8;
@@ -144,6 +147,8 @@ hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
 .btn-icon { padding: 10px; border-radius: 50%; }
 .btn-small { padding: 6px 12px; font-size: 0.8125rem; }
 .btn-small-close { padding: 6px 6px; font-size: 0.8125rem; border-radius: 10px; background-color: transparent;}
+.btn-voted { background: var(--btn-voted-bg); color: rgba(0, 128, 255) }
+.btn-voted:hover { background: var(--btn-voted-hover); }
 
 
 .panel {

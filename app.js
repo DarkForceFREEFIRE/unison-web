@@ -95,7 +95,7 @@ async function apiFetch(endpoint, options = {}) {
     return isJson ? res.json() : res.text();
 }
 
-async function apiSignedAction(endpoint, payloadData) {
+async function apiSignedAction(endpoint, payloadData, options = {}) {
     const user = JSON.parse(localStorage.getItem('unisonIdentity'));
     if (!user) throw new Error("Not logged in");
 
@@ -112,7 +112,8 @@ async function apiSignedAction(endpoint, payloadData) {
     return apiFetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-key-id": user.keyId },
-        body: JSON.stringify(envelope)
+        body: JSON.stringify(envelope),
+        ...options
     });
 }
 
@@ -300,7 +301,9 @@ async function initDetailPage() {
     if (!id) { window.location.href = 'index.html'; return; }
 
     try {
-        const res = await apiFetch(`/${id}`);
+        const user = JSON.parse(localStorage.getItem('unisonIdentity'));
+        const res = await apiFetch(`/${id}`, { headers: { "x-key-id": user?.keyId } });
+
         const item = res.data;
         window.currentLyricData = item;
         window.currentLyricId = id;
@@ -313,6 +316,12 @@ async function initDetailPage() {
         document.getElementById('det-score').innerText = Number(item.score).toFixed(1) || 0;
         document.getElementById('det-votecount').innerText = `${item.voteCount || 0} votes`;
         document.getElementById('det-raw').innerText = item.lyrics;
+        document.getElementById('det-upvote').className = "btn" + (item.userVote === 1 ? " btn-voted" : "");
+        document.getElementById('det-upvote').querySelector("span#label-upvote").innerText = item.userVote === 1 ? "Upvoted" : "Upvote";
+        document.getElementById('det-upvote').onclick = item.userVote === 1 ? () => removeVote() : () => submitVote(1);
+        document.getElementById('det-downvote').className = "btn" + (item.userVote === -1 ? " btn-voted" : "");
+        document.getElementById('det-downvote').querySelector("span#label-downvote").innerText = item.userVote === -1 ? "Downvoted" : "Downvote";
+        document.getElementById('det-downvote').onclick = item.userVote === -1 ? () => removeVote() : () => submitVote(-1);
 
         // Initialize player and interactive preview
         if (item.videoId && item.videoId !== 'local-file') {
@@ -352,12 +361,40 @@ async function submitVote(voteValue) {
     try {
         await apiSignedAction(`/${window.currentLyricId}/vote`, { vote: voteValue });
         showToast("Your vote has been recorded!", "success");
-        const res = await apiFetch(`/${window.currentLyricId}`);
+        const user = JSON.parse(localStorage.getItem('unisonIdentity'));
+        const res = await apiFetch(`/${window.currentLyricId}`, { headers: { "x-key-id": user?.keyId } });
         const item = res.data;
         document.getElementById('det-score').innerText = Number(item.score).toFixed(1) || 0;
         document.getElementById('det-votecount').innerText = `${item.voteCount || 0} votes`;
+        document.getElementById('det-upvote').className = "btn" + (item.userVote === 1 ? " btn-voted" : "");
+        document.getElementById('det-upvote').querySelector("span#label-upvote").innerText = item.userVote === 1 ? "Upvoted" : "Upvote";
+        document.getElementById('det-upvote').onclick = item.userVote === 1 ? () => removeVote() : () => submitVote(1);
+        document.getElementById('det-downvote').className = "btn" + (item.userVote === -1 ? " btn-voted" : "");
+        document.getElementById('det-downvote').querySelector("span#label-downvote").innerText = item.userVote === -1 ? "Downvoted" : "Downvote";
+        document.getElementById('det-downvote').onclick = item.userVote === -1 ? () => removeVote() : () => submitVote(-1);
     } catch (err) {
         showToast(`Vote failed: ${err.message}`, "error");
+    }
+}
+
+async function removeVote() {
+    if (!window.currentLyricId) return;
+    try {
+        await apiSignedAction(`/${window.currentLyricId}/vote`, {}, { method: "DELETE" });
+        showToast("Your vote has been removed", "success");
+        const user = JSON.parse(localStorage.getItem('unisonIdentity'));
+        const res = await apiFetch(`/${window.currentLyricId}`, { headers: { "x-key-id": user?.keyId } });
+        const item = res.data;
+        document.getElementById('det-score').innerText = Number(item.score).toFixed(1) || 0;
+        document.getElementById('det-votecount').innerText = `${item.voteCount || 0} votes`;
+        document.getElementById('det-upvote').className = "btn" + (item.userVote === 1 ? " btn-voted" : "");
+        document.getElementById('det-upvote').querySelector("span#label-upvote").innerText = item.userVote === 1 ? "Upvoted" : "Upvote";
+        document.getElementById('det-upvote').onclick = item.userVote === 1 ? () => removeVote() : () => submitVote(1);
+        document.getElementById('det-downvote').className = "btn" + (item.userVote === -1 ? " btn-voted" : "");
+        document.getElementById('det-downvote').querySelector("span#label-downvote").innerText = item.userVote === -1 ? "Downvoted" : "Downvote";
+        document.getElementById('det-downvote').onclick = item.userVote === -1 ? () => removeVote() : () => submitVote(-1);
+    } catch (err) {
+        showToast(`Failed to remove vote: ${err.message}`, "error");
     }
 }
 
