@@ -64,9 +64,14 @@
                 </div>
 
                 <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" style="display:none;" onchange="handleAvatarUpload(event)">
-                <button class="btn" onclick="document.getElementById('avatar-upload').click()">
-                    <span class="material-symbols-rounded">upload</span> <span class="hide-mobile">Upload</span>
-                </button>
+                <div class="flex-center gap-1">
+                    <button id="remove-avatar" class="btn btn-danger" onclick="removeAvatar()" style="visibility: hidden;">
+                        Remove Avatar
+                    </button>
+                    <button class="btn" onclick="document.getElementById('avatar-upload').click()">
+                        <span class="material-symbols-rounded">upload</span> <span class="hide-mobile">Upload</span>
+                    </button>
+                </div>
             </div>
 
             <div class="flex-between">

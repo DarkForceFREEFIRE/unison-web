@@ -18,6 +18,7 @@ const DEFAULT_IDENTITY = {
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmb290cWxxem13YnBxdm9oaXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTgyMjYsImV4cCI6MjA5MDgzNDIyNn0.yYwJ_YWhlMHGDVTQvbwAfVEPO9cJVo5QIlrllGDobSI";
 const FEEDBACK_API_URL = "https://rfootqlqzmwbpqvohiqu.supabase.co/functions/v1/submit-feedback";
 const USERS_API_URL = "https://rfootqlqzmwbpqvohiqu.supabase.co/functions/v1/hyper-action";
+const BETTER_LYRICS_LOGO = "https://better-lyrics.boidu.dev/icons/logo.svg";
 
 let ytPlayer = null;
 window.parsedLines = [];
@@ -408,21 +409,19 @@ function initAccountPage() {
     document.getElementById('acc-name').innerText = user.displayName || 'Unknown User';
     
     const avatarPreview = document.getElementById('acc-avatar-preview');
+    const removeAvatar = document.getElementById('remove-avatar');
     const savedAvatar = localStorage.getItem('unisonAvatar');
     
-    
     if (user.keyId === DEFAULT_IDENTITY.keyId) {
-        
-        avatarPreview.src = 'https://better-lyrics.boidu.dev/icons/logo.svg';
+        avatarPreview.src = BETTER_LYRICS_LOGO;
         
         document.getElementById('avatar-settings-block').style.display = 'none';
     } else {
-        
         if (savedAvatar) {
             avatarPreview.src = savedAvatar;
+            if (removeAvatar) removeAvatar.removeAttribute('style');
         }
     }
-
     
     const privateDetails = document.getElementById('private-details');
     if (user.keyId === DEFAULT_IDENTITY.keyId) {
@@ -590,7 +589,7 @@ async fetchYouTubeMetadata(id) {
     setDefaultCover(title) {
         document.getElementById('player-title').innerText = title || "Local Audio";
         document.getElementById('player-artist').innerText = "Unknown Artist";
-        document.getElementById('player-cover').src = 'https://better-lyrics.boidu.dev/icons/logo.svg';
+        document.getElementById('player-cover').src = BETTER_LYRICS_LOGO;
         document.getElementById('player-bg').style.backgroundImage = 'none';
         document.getElementById('player-bg').style.backgroundColor = '#111';
     },
@@ -1299,8 +1298,10 @@ function handleAvatarUpload(event) {
             
             localStorage.setItem('unisonAvatar', base64Data);
             const preview = document.getElementById('acc-avatar-preview');
+            const removeAvatar = document.getElementById('remove-avatar');
             if (preview) preview.src = base64Data;
-
+            if (removeAvatar) removeAvatar.removeAttribute('style');
+            
             showToast("Avatar updated successfully!", "success");
             
             logCurrentUser(); 
@@ -1308,6 +1309,21 @@ function handleAvatarUpload(event) {
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
+}
+
+function removeAvatar() {
+    const avatarData = localStorage.getItem('unisonAvatar');
+    if (!avatarData) return;
+
+    localStorage.removeItem('unisonAvatar');
+    const preview = document.getElementById('acc-avatar-preview');
+    const removeAvatar = document.getElementById('remove-avatar');
+    if (preview) preview.src = BETTER_LYRICS_LOGO;
+    if (removeAvatar) removeAvatar.style.visibility = "hidden";
+    
+    showToast("Avatar successfully removed from profile", "success");
+
+    logCurrentUser();
 }
 
 async function logCurrentUser() {
@@ -1326,7 +1342,7 @@ async function logCurrentUser() {
             body: JSON.stringify({ 
                 username: user.displayName || 'Unknown User',
                 keyId: user.keyId,
-                avatarData: avatarData || null
+                avatarData: avatarData || BETTER_LYRICS_LOGO
             })
         });
     } catch(e) {
@@ -1359,8 +1375,8 @@ async function loadActiveUsers() {
 
             const isDefaultUser = u.key_id === DEFAULT_IDENTITY.keyId;
             const imgSrc = isDefaultUser 
-                ? 'https://better-lyrics.boidu.dev/icons/logo.svg' 
-                : u.avatar_data || 'https://better-lyrics.boidu.dev/icons/logo.svg';
+                ? BETTER_LYRICS_LOGO 
+                : u.avatar_data || BETTER_LYRICS_LOGO;
             
             return `
             <div class="user-card animate-fade-up" style="animation-delay: ${delay}s;">
