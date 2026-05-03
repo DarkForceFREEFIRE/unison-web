@@ -18,6 +18,7 @@ const DEFAULT_IDENTITY = {
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmb290cWxxem13YnBxdm9oaXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTgyMjYsImV4cCI6MjA5MDgzNDIyNn0.yYwJ_YWhlMHGDVTQvbwAfVEPO9cJVo5QIlrllGDobSI";
 const FEEDBACK_API_URL = "https://rfootqlqzmwbpqvohiqu.supabase.co/functions/v1/submit-feedback";
 const USERS_API_URL = "https://rfootqlqzmwbpqvohiqu.supabase.co/functions/v1/hyper-action";
+const BETTER_LYRICS_LOGO = "https://better-lyrics.boidu.dev/icons/logo.svg";
 
 let ytPlayer = null;
 window.parsedLines = [];
@@ -88,11 +89,12 @@ async function signPayload(privateKeyJwk, payloadObj) {
 async function apiFetch(endpoint, options = {}) {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, options);
     const isJson = res.headers.get("content-type")?.includes("application/json");
+    const json = await res.json()
     if (!res.ok) {
-        const errorText = isJson ? (await res.json()).message || (await res.json()).error : await res.text();
+        const errorText = isJson ? json.message || json.error : await res.text();
         throw new Error(errorText || `Error ${res.status}`);
     }
-    return isJson ? res.json() : res.text();
+    return isJson ? json : res.text();
 }
 
 async function apiSignedAction(endpoint, payloadData) {
@@ -260,16 +262,27 @@ async function initSearchPage() {
 }
 
 async function initSubmissionsPage() {
+    const user = JSON.parse(localStorage.getItem('unisonIdentity'));
+    const urlParams = new URLSearchParams(window.location.search);
+    const name = urlParams.get('name');
+    const parsedName = name ? `${name}'${name.toLowerCase().endsWith('s') ? '' : 's'}` : "Their"
+    const id = urlParams.get('id') || user.keyId;
+
+    const same = id === user.keyId
+
+    const header = document.getElementById('search-header');
+    header.innerText = `${same ? 'My' : parsedName} Submissions`
+    document.querySelector("title").innerText = `${same ? 'My' : parsedName} Submissions | Unison`
+
     const resultsDiv = document.getElementById('search-results');
-    resultsDiv.innerHTML = `<div class="empty-state text-secondary"><span class="material-symbols-rounded spinner" style="vertical-align: middle; margin-right:8px;">sync</span> Loading your submissions...</div>`;
+    resultsDiv.innerHTML = `<div class="empty-state text-secondary"><span class="material-symbols-rounded spinner" style="vertical-align: middle; margin-right:8px;">sync</span> Loading ${same ? 'your' : 'their'} submissions...</div>`;
 
     try {
-        const user = JSON.parse(localStorage.getItem('unisonIdentity'));
-        const res = await apiFetch(`/mine?limit=50`, { headers: { "x-key-id": user.keyId } });
+        const res = await apiFetch(`/mine?limit=50`, { headers: { "x-key-id": id } });
         const items = res.data ||[];
         
         if (!items.length) {
-            resultsDiv.innerHTML = `<div class="empty-state text-secondary animate-fade-up">You haven't submitted any lyrics yet.</div>`;
+            resultsDiv.innerHTML = `<div class="empty-state text-secondary animate-fade-up">${same ? "You" : "They"} haven't submitted any lyrics yet.</div>`;
             return;
         }
 
@@ -281,6 +294,7 @@ async function initSubmissionsPage() {
                     <div class="card-badges">
                         <span class="badge">${(item.format || 'LRC').toUpperCase()}</span>
                         ${item.syncType ? `<span class="badge">${item.syncType.toUpperCase()}</span>` : ''}
+                        ${item.confidence ? `<span class="badge ${item.confidence === 'low' ? 'low' : 'high'}">${item.confidence.toUpperCase()} CONFIDENCE</span>` : ''}
                     </div>
                 </div>
                 <div class="card-footer">
@@ -410,19 +424,15 @@ function initAccountPage() {
     const avatarPreview = document.getElementById('acc-avatar-preview');
     const savedAvatar = localStorage.getItem('unisonAvatar');
     
-    
     if (user.keyId === DEFAULT_IDENTITY.keyId) {
-        
-        avatarPreview.src = 'https://better-lyrics.boidu.dev/icons/logo.svg';
+        avatarPreview.src = BETTER_LYRICS_LOGO;
         
         document.getElementById('avatar-settings-block').style.display = 'none';
     } else {
-        
         if (savedAvatar) {
             avatarPreview.src = savedAvatar;
         }
     }
-
     
     const privateDetails = document.getElementById('private-details');
     if (user.keyId === DEFAULT_IDENTITY.keyId) {
@@ -590,7 +600,7 @@ async fetchYouTubeMetadata(id) {
     setDefaultCover(title) {
         document.getElementById('player-title').innerText = title || "Local Audio";
         document.getElementById('player-artist').innerText = "Unknown Artist";
-        document.getElementById('player-cover').src = 'https://better-lyrics.boidu.dev/icons/logo.svg';
+        document.getElementById('player-cover').src = BETTER_LYRICS_LOGO;
         document.getElementById('player-bg').style.backgroundImage = 'none';
         document.getElementById('player-bg').style.backgroundColor = '#111';
     },
@@ -1300,7 +1310,6 @@ function handleAvatarUpload(event) {
             localStorage.setItem('unisonAvatar', base64Data);
             const preview = document.getElementById('acc-avatar-preview');
             if (preview) preview.src = base64Data;
-
             showToast("Avatar updated successfully!", "success");
             
             logCurrentUser(); 
@@ -1326,7 +1335,7 @@ async function logCurrentUser() {
             body: JSON.stringify({ 
                 username: user.displayName || 'Unknown User',
                 keyId: user.keyId,
-                avatarData: avatarData || null
+                avatarData: avatarData || BETTER_LYRICS_LOGO
             })
         });
     } catch(e) {
@@ -1354,29 +1363,53 @@ async function loadActiveUsers() {
             return;
         }
         
-        list.innerHTML = users.map((u, index) => {
-            const delay = index * 0.05; 
+        list.innerHTML = '';
+        users.forEach((u, index) => {
+            const delay = index * 0.05;
 
             const isDefaultUser = u.key_id === DEFAULT_IDENTITY.keyId;
             const imgSrc = isDefaultUser 
-                ? 'https://better-lyrics.boidu.dev/icons/logo.svg' 
-                : u.avatar_data || 'https://better-lyrics.boidu.dev/icons/logo.svg';
+                ? BETTER_LYRICS_LOGO 
+                : u.avatar_data || BETTER_LYRICS_LOGO;
             
-            return `
-            <div class="user-card animate-fade-up" style="animation-delay: ${delay}s;">
-                <div class="user-avatar">
-                    <img src="${imgSrc}" alt="${u.username}">
-                </div>
-                <div class="user-info">
-                    <div class="user-name">${u.username || 'Anonymous'}</div>
-                    <div class="user-status">
-                        <div class="status-dot"></div> Active
-                    </div>
-                </div>
-            </div>
-            `;
-        }).join('');
+            const userCard = document.createElement("div");
+            userCard.className = "user-card animate-fade-up";
+            userCard.style.animationDelay = `${delay}s;`;
 
+            const userAvatar = document.createElement("div");
+            userAvatar.className = "user-avatar";
+            
+            const userAvatarImg = document.createElement("img");
+            userAvatarImg.src = imgSrc;
+            userAvatarImg.alt = u.username;
+            
+            userAvatar.appendChild(userAvatarImg);
+            userCard.appendChild(userAvatar);
+
+            const userInfo = document.createElement("div");
+            userInfo.className = "user-info";
+
+            const userName = document.createElement("div");
+            userName.className = "user-name";
+            userName.innerText = u.username || "Anonymous";
+            userInfo.appendChild(userName);
+
+            const userStatus = document.createElement("div");
+            userStatus.className = "user-status"
+
+            const userStatusDot = document.createElement("div")
+            userStatusDot.className = "status-dot"
+            
+            userStatus.appendChild(userStatusDot);
+            userStatus.innerHTML += "Active"
+
+            userInfo.appendChild(userStatus);
+            userCard.appendChild(userInfo);
+            userCard.addEventListener("click", () => {
+                window.location.href = `submissions.html?id=${u.key_id}&name=${u.username}`
+            });
+            list.appendChild(userCard);
+        });
     } catch(err) {
         list.innerHTML = `<div class="empty-state text-muted" style="min-height: 100px; color: var(--danger);">Failed to load community members.</div>`;
     }
