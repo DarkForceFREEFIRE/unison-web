@@ -106,6 +106,9 @@ function setDropdownOption(containerId, value, label) {
 
 function setLanguage(langCode, langName) {
     setDropdownOption('language-dropdown', langCode, langName);
+    window.selectedLanguage = langCode;
+
+    localStorage.setItem('selectedLanguage', langCode);
 
     if (typeof setSelectedLanguage === "function") {
         setSelectedLanguage(langCode);
