@@ -1,93 +1,104 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account | Unison</title>
+    <script>
+        const theme = localStorage.getItem('unisonTheme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+    </script>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/svg+xml" href="https://composer.boidu.dev/logo.svg">
-
 </head>
+
 <body id="page-account">
 
     <header class="top-nav">
         <div class="nav-left">
             <a href="index.html" class="logo">
-                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
+                <img src="logo.svg" alt="Unison">
                 <div class="logo-text">
-                    <h1>Unison</h1>
-                    <span>Settings</span>
+                    <h1>Unison</h1><span>Settings</span>
                 </div>
             </a>
             <nav class="nav-links">
-                <a href="index.html" id="nav-search">Search</a>
-                <a href="submissions.html" id="nav-submissions">My Submissions</a>
+                <a href="index.html">Search</a>
+                <a href="submissions.html">My Submissions</a>
             </nav>
         </div>
         <div class="nav-right">
-            <a href="index.html" class="btn"><span class="material-symbols-rounded">home</span> Home</a>
+            <a href="index.html" class="btn"><span class="fluent-icon"></span> Home</a>
         </div>
     </header>
 
     <main class="animate-fade-up">
-        <div class="page-header" style="text-align: left;">
-            <h2>Account Settings</h2>
+        <div class="page-header">
+            <h2>Settings</h2>
         </div>
 
         <div class="panel" style="max-width: 650px;">
             <div class="flex-between mb-2">
                 <div>
-                    <h3 id="acc-name" style="font-size: 1.25rem;">User Name</h3>
-
-                    <div id="private-details" style="display: none; margin-top: 12px;">
-                        <p class="text-secondary" style="font-family: var(--font-mono); font-size: 0.85rem;" id="acc-key"></p>
-                        <div class="flex-between mt-1" style="justify-content: flex-start; gap: 12px;">
-                            <button class="btn btn-small" id="copy-id-btn"><span class="material-symbols-rounded" style="font-size: 16px;">content_copy</span> Copy ID</button>
-                            <button class="btn btn-small" id="export-btn"><span class="material-symbols-rounded" style="font-size: 16px;">download</span> Export Identity</button>
+                    <h3 id="acc-name" style="font-size: 20px; font-weight: 600;">User Name</h3>
+                    <div id="private-details" style="display: none; margin-top: 8px;">
+                        <p class="text-secondary" style="font-family: var(--font-mono); font-size: 13px;" id="acc-key">
+                        </p>
+                        <div class="flex-between mt-1" style="justify-content: flex-start; gap: 8px;">
+                            <button class="btn btn-small" id="copy-id-btn"><span class="material-symbols-rounded"
+                                    style="font-size: 16px;">content_copy</span> Copy</button>
+                            <button class="btn btn-small" id="export-btn"><span class="material-symbols-rounded"
+                                    style="font-size: 16px;">download</span> Export JSON</button>
                         </div>
                     </div>
-
                 </div>
                 <button class="btn btn-danger" onclick="logout()">
-                    <span class="material-symbols-rounded">logout</span> Logout
+                    <span class="fluent-icon"></span> Logout
                 </button>
             </div>
 
             <hr>
-            <div class="flex-between" id="avatar-settings-block">
+            <div class="flex-between mb-3" id="avatar-settings-block">
                 <div class="flex-center gap-2">
-                    <img id="acc-avatar-preview" src="https://better-lyrics.boidu.dev/icons/logo.svg" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border-color); background: var(--bg-input);">
+                    <img id="acc-avatar-preview" src="https://better-lyrics.boidu.dev/icons/logo.svg"
+                        style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 1px solid var(--card-border);">
                     <div>
-                        <h4>Profile Avatar</h4>
-                        <p class="text-secondary" style="font-size: 0.85rem;">Upload a custom image.</p>
+                        <h4 style="font-weight: 600;">Profile Avatar</h4>
+                        <p class="text-secondary" style="font-size: 13px;">Upload a custom image.</p>
                     </div>
                 </div>
+                <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" style="display:none;"
+                    onchange="handleAvatarUpload(event)">
+                <button class="btn" onclick="document.getElementById('avatar-upload').click()"><span class="fluent-icon"
+                        ; style="font-size: 12px;"></span> Upload</button>
+            </div>
 
-                <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" style="display:none;" onchange="handleAvatarUpload(event)">
-                <button class="btn" onclick="document.getElementById('avatar-upload').click()">
-                    <span class="material-symbols-rounded">upload</span> <span class="hide-mobile">Upload</span>
-                </button>
+            <div class="flex-between mb-3">
+                <div>
+                    <h4 style="font-weight: 600;">Dark Theme</h4>
+                    <p class="text-secondary" style="font-size: 13px;">Toggle Light and Dark UI.</p>
+                </div>
+                <label class="wui-button-switch">
+                    <input type="checkbox" id="theme-switch">
+                    <span class="wui-button-switch-slider"></span>
+                </label>
             </div>
 
             <div class="flex-between">
                 <div>
-                    <h4>Theme Preferences</h4>
-                    <p class="text-secondary" style="font-size: 0.85rem;">Toggle Light and Dark UI.</p>
+                    <h4 style="font-weight: 600;">Lyric Display Effects</h4>
+                    <p class="text-secondary" style="font-size: 13px;">Enable smooth fade-in and glow effects.</p>
                 </div>
-                <button class="btn" id="theme-toggle-btn">
-                    <span class="material-symbols-rounded">contrast</span> <span class="hide-mobile">Switch Theme</span>
-                </button>
+                <label class="wui-button-switch">
+                    <input type="checkbox" id="effects-switch">
+                    <span class="wui-button-switch-slider"></span>
+                </label>
             </div>
         </div>
     </main>
 
-    <footer class="app-footer">
-        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
-            Made by Walker
-            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
-        </div>
-    </footer>
-
+    <div id="toast-container"></div>
     <script src="app.js"></script>
 </body>
+
 </html>
