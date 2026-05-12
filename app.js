@@ -76,8 +76,12 @@ function winUIScroll(container, target) {
             easing: (t) => 1 - Math.pow(1 - t, 4)
         });
     } else {
-        const targetTop = target.offsetTop;
-        const scrollToPosition = targetTop - (containerHeight / 2) + (targetHeight / 2);
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+
+        const offsetTop = (targetRect.top - containerRect.top) + container.scrollTop;
+
+        const scrollToPosition = offsetTop - (containerHeight / 2) + (targetHeight / 2);
 
         container.scrollTo({
             top: scrollToPosition,
@@ -683,14 +687,21 @@ const page = {
                             if (activeLineContainer) activeLineContainer.classList.remove('active');
                             else document.querySelectorAll('.lyric-line.active').forEach(l => l.classList.remove('active'));
 
-                            activeLineContainer = document.getElementById(`line-${activeIndex}`);
+                            activeLineContainer = document.getElementById('line-' + activeIndex);
                             if (activeLineContainer) {
                                 activeLineContainer.classList.add('active');
 
-                                // Use the updated winUIScroll
-                                winUIScroll(activeLineContainer.parentElement, activeLineContainer);
+                                const scrollContainer = activeLineContainer.closest('#sync-preview-content, #det-preview') || activeLineContainer.parentElement;
+                                winUIScroll(scrollContainer, activeLineContainer);
 
-                                activeWordElements = line.words?.length ? line.words.map((w, wi) => document.getElementById(`word-${activeIndex}-${wi}`)) : [];
+                                activeWordElements = new Array();
+                                if (line.words && line.words.length > 0) {
+                                    for (let wi = 0; wi < line.words.length; wi++) {
+                                        const wordId = 'word-' + activeIndex + '-' + wi;
+                                        const wSpan = document.getElementById(wordId);
+                                        activeWordElements.push(wSpan);
+                                    }
+                                }
                             }
                             window.currentActiveLineIndex = activeIndex;
                         }
@@ -776,8 +787,8 @@ function initSubmitPage() {
     const pane = document.querySelector('.pane-content');
     if (pane) getOrCreateLenis(pane);
 
-    const syncPreview = document.getElementById('sync-preview-content');
-    if (syncPreview) getOrCreateLenis(syncPreview);
+    //const syncPreview = document.getElementById('sync-preview-content');
+    //if (syncPreview) getOrCreateLenis(syncPreview);
 
     const audio = document.getElementById('local-player');
     const playBtn = document.getElementById('play-pause-btn');
@@ -785,6 +796,59 @@ function initSubmitPage() {
     const timeCurrent = document.getElementById('time-current'); // Fix: The left side
     const timeTotal = document.getElementById('time-total');     // Fix: The right side
     const progressContainer = document.getElementById('progress-container');
+    const volumeSlider = document.getElementById('volume-slider');
+    const muteBtn = document.getElementById('mute-btn');
+    const speedBtn = document.getElementById('speed-btn');
+    const speedIcon = document.getElementById('speed-icon');
+    const speedText = document.getElementById('speed-text');
+
+    // --- Volume Logic ---
+    let lastVolume = 1;
+    volumeSlider.addEventListener('input', () => {
+        const val = volumeSlider.value / 100;
+        audio.volume = val;
+        volumeSlider.style.setProperty('--slider-fill', `${volumeSlider.value}%`);
+        updateMuteIcon(val === 0);
+        if (val > 0) lastVolume = val;
+    });
+
+    muteBtn.addEventListener('click', () => {
+        if (audio.volume > 0) {
+            lastVolume = audio.volume;
+            audio.volume = 0;
+            volumeSlider.value = 0;
+        } else {
+            audio.volume = lastVolume;
+            volumeSlider.value = lastVolume * 100;
+        }
+        volumeSlider.style.setProperty('--slider-fill', `${volumeSlider.value}%`);
+        updateMuteIcon(audio.volume === 0);
+    });
+
+    function updateMuteIcon(isMuted) {
+        muteBtn.innerHTML = `<span class="fluent-icon">${isMuted ? '' : ''}</span>`;
+    }
+
+    // --- Speed Logic ---
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+    let currentSpeedIndex = 2; // Starts at 1x
+
+    speedBtn.addEventListener('click', () => {
+        currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+        const newSpeed = speeds[currentSpeedIndex];
+        audio.playbackRate = newSpeed;
+        speedText.innerText = newSpeed + 'x';
+
+        // Update Icons based on speed
+        if (newSpeed < 1) speedIcon.innerText = '';
+        else if (newSpeed === 1) speedIcon.innerText = '';
+        else speedIcon.innerText = '';
+
+        showToast(`Playback speed: ${newSpeed}x`, 'info');
+    });
+
+    // Ensure volume slider fill is initialized
+    volumeSlider.style.setProperty('--slider-fill', '100%');
 
     if (!audio || !playBtn || !audioSlider) return;
 
@@ -1011,14 +1075,18 @@ function parseChunk(text, isBg, wordsArr, lineStart) {
 function renderPreview(containerId = 'sync-preview-content') {
     const container = document.getElementById(containerId);
     if (!container) return;
+
+    // Clear and set up the inner scrolling wrapper
     container.innerHTML = '';
+    const innerScroll = document.createElement('div');
+    innerScroll.className = 'lyric-scroll-inner';
+    container.appendChild(innerScroll);
 
     if (!window.parsedLines || window.parsedLines.length === 0) {
-        container.innerHTML = `<div class="empty-state">Invalid format or empty lyrics</div>`;
+        innerScroll.innerHTML = '<div class="empty-state">Invalid format or empty lyrics</div>';
         return;
     }
 
-    // Human-readable names for the UI
     const agentNames = {
         'v1': 'Lead',
         'v2': 'Vocal 2',
@@ -1029,11 +1097,9 @@ function renderPreview(containerId = 'sync-preview-content') {
     window.parsedLines.forEach((line, i) => {
         const div = document.createElement('div');
         div.className = 'lyric-line';
-        if (line.agent && line.agent !== 'v1') div.classList.add(`agent-${line.agent}`);
+        if (line.agent && line.agent !== 'v1') div.classList.add('agent-' + line.agent);
         if (window.enableLyricEffects) div.classList.add('with-effects');
-        div.id = `line-${i}`;
-
-
+        div.id = 'line-' + i;
 
         if (line.words && line.words.length > 0) {
             const mainContainer = document.createElement('div');
@@ -1045,7 +1111,7 @@ function renderPreview(containerId = 'sync-preview-content') {
                 span.className = 'lyric-word';
                 if (w.isBg) span.classList.add('bg-vocal');
                 if (window.enableLyricEffects) span.classList.add('with-effects');
-                span.id = `word-${i}-${wi}`;
+                span.id = 'word-' + i + '-' + wi;
                 span.innerText = w.text;
                 span.setAttribute('data-text', w.text);
                 w.isBg ? bgContainer.appendChild(span) : mainContainer.appendChild(span);
@@ -1055,7 +1121,9 @@ function renderPreview(containerId = 'sync-preview-content') {
         } else {
             div.innerText = line.text;
         }
-        container.appendChild(div);
+
+        // Append to innerScroll instead of container
+        innerScroll.appendChild(div);
     });
 }
 

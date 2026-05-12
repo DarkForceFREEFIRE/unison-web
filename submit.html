@@ -219,8 +219,26 @@
                                 </div>
                                 <span id="time-total">0:00</span>
                             </div>
-                            <div style="display:flex; justify-content:center; margin-top:8px;">
+
+                            <!-- NEW CONTROLS ROW -->
+                            <div class="player-controls-main">
+                                <div class="volume-control">
+                                    <button id="mute-btn" class="btn-icon-plain"><span
+                                            class="fluent-icon"></span></button>
+                                    <div class="volume-slider-container">
+                                        <input type="range" id="volume-slider" class="fluent-slider mini-slider" min="0"
+                                            max="100" value="100">
+                                    </div>
+                                </div>
+
                                 <button id="play-pause-btn" class="play-btn"><span class="fluent-icon"></span></button>
+
+                                <div class="speed-control">
+                                    <button id="speed-btn" class="btn btn-small">
+                                        <span id="speed-icon" class="fluent-icon"></span>
+                                        <span id="speed-text">1x</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <audio id="local-player" class="hidden"></audio>
@@ -232,7 +250,9 @@
                     </div>
                 </div>
                 <div id="sync-preview-content">
-                    <div class="empty-state text-muted">Lyrics will preview here</div>
+                    <div class="lyric-scroll-inner">
+                        <div class="empty-state text-muted">Lyrics will preview here</div>
+                    </div>
                 </div>
             </div>
         </div>
