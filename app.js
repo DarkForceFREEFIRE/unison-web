@@ -255,12 +255,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('q')) searchInput.value = urlParams.get('q');
 
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const query = searchInput.value.trim();
-                window.location.href = query ? `index.html?q=${encodeURIComponent(query)}` : `index.html`;
+        const submitSearch = () => {
+            const query = searchInput.value.trim();
+            window.location.href = query ? `index.html?q=${encodeURIComponent(query)}` : `index.html`;
+        };
+
+        const searchKeyHandler = (e) => {
+            if (e.key === 'Enter' || e.keyCode === 13 || e.which === 13) {
+                e.preventDefault();
+                submitSearch();
             }
-        });
+        };
+
+        searchInput.addEventListener('keydown', searchKeyHandler);
+        searchInput.addEventListener('keypress', searchKeyHandler);
+
+        const searchIcon = document.querySelector('.search-bar .fluent-icon');
+        if (searchIcon) {
+            searchIcon.addEventListener('click', (e) => {
+                e.preventDefault();
+                submitSearch();
+            });
+        }
     }
 
     const pageId = document.body.id;
