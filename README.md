@@ -1,6 +1,5 @@
 <p align="center">
-  <img src="<img width="1554" height="969" alt="image" src="https://github.com/user-attachments/assets/2a4acb6c-99bb-400f-9742-fa7beb987ce2" />
-" alt="Unison Web Banner" width="100%" />
+  <img src="https://github.com/user-attachments/assets/2a4acb6c-99bb-400f-9742-fa7beb987ce2" alt="Unison Web Banner" width="100%" />
 </p>
 
 <p align="center">
