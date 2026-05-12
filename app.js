@@ -1146,18 +1146,27 @@ async function submitLyricsForm() {
     if (!vid && page.activeSource === 'yt') return showToast("Please provide a valid YouTube URL.", "error");
     if (!song || !artist || !durStr || !lyrics) return showToast("Please fill in all required fields.", "error");
 
-    const format = (lyrics.startsWith('<?xml') || lyrics.startsWith('<tt')) ? 'ttml' : 'lrc';
+    const isTTML = lyrics.startsWith('<?xml') || lyrics.startsWith('<tt');
+    const format = isTTML ? 'ttml' : 'lrc';
+    const syncType = isTTML ? 'richsync' : 'linesync';
+
     btn.disabled = true;
-    btn.innerHTML = '<span class="fluent-icon"></span> Publishing...';
+    btn.innerHTML = '<span class="fluent-icon spinner"></span> Publishing...';
 
     try {
-        const response = await fetch('/api/submit-lyrics', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ videoId: vid || "local-file", song, artist, lyrics, format, duration: parseInt(durStr, 10), language: window.selectedLanguage || 'en' }),
-        });
+        const payload = {
+            videoId: vid || "local-file",
+            song,
+            artist,
+            lyrics,
+            format,
+            duration: parseInt(durStr, 10),
+            language: window.selectedLanguage || 'en',
+            syncType: syncType
+        };
 
-        if (!response.ok) throw new Error("Submission Failed. (Mock Server)");
+        await apiSignedAction('/submit', payload);
+
         showToast("Successfully published!", "success");
         setTimeout(() => window.location.href = 'index.html', 1500);
 
@@ -1165,13 +1174,11 @@ async function submitLyricsForm() {
         showToast(e.message, "error");
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span class="fluent-icon"></span> Publish to Unison';
+        btn.innerHTML = '<span class="fluent-icon"></span> Publish to Unison';
     }
 }
 
-// ----------------------------------------------------
-// UI HANDLERS
-// ----------------------------------------------------
+
 window.toggleRawPayload = function () {
     const body = document.getElementById('raw-payload-body');
     const icon = document.getElementById('raw-toggle-icon');
