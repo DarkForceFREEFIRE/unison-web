@@ -27,47 +27,62 @@ let hasWarnedELRC = false;
 
 window.selectedLanguage = localStorage.getItem('selectedLanguage') || 'en';
 window.enableLyricEffects = localStorage.getItem('enableLyricEffects') !== 'false';
+const lenisInstances = new Map();
+
+function getOrCreateLenis(element) {
+    if (!element) return null;
+    if (lenisInstances.has(element)) return lenisInstances.get(element);
+
+    const instance = new Lenis({
+        wrapper: element,
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+    });
+
+    lenisInstances.set(element, instance);
+    return instance;
+}
+
+function globalRaf(time) {
+    lenisInstances.forEach(instance => instance.raf(time));
+    requestAnimationFrame(globalRaf);
+}
+requestAnimationFrame(globalRaf);
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof Lenis !== 'undefined') {
+        const mainLenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        });
+        lenisInstances.set(window, mainLenis);
+    }
+});
 
 
-/**
- * WinUI 3 style smooth scroll.
- * Uses a Quartic Ease-Out for that "fast start, elegant stop" feeling.
- */
 function winUIScroll(container, target) {
     if (!container || !target) return;
 
-    if (page.activeScrollId !== null) {
-        cancelAnimationFrame(page.activeScrollId);
+    const lenis = lenisInstances.get(container);
+
+    const targetTop = target.offsetTop;
+    const targetHeight = target.clientHeight;
+    const containerHeight = container.clientHeight;
+
+    const scrollToPosition = targetTop - (containerHeight / 2) + (targetHeight / 2);
+
+    if (lenis) {
+        lenis.scrollTo(scrollToPosition, {
+            duration: 0.45,
+            easing: (t) => 1 - Math.pow(1 - t, 4)
+        });
+    } else {
+        container.scrollTo({
+            top: scrollToPosition,
+            behavior: 'smooth'
+        });
     }
-
-    const containerRect = container.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-
-    const targetCenter = targetRect.top + (targetRect.height / 2);
-    const containerCenter = containerRect.top + (containerRect.height / 2);
-
-    const distance = targetCenter - containerCenter;
-    const startScrollTop = container.scrollTop;
-    const duration = 450;
-    let startTime = null;
-
-    const easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
-
-    function animation(currentTime) {
-        if (startTime === null) startTime = currentTime;
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        container.scrollTop = startScrollTop + (distance * easeOutQuart(progress));
-
-        if (progress < 1) {
-            page.activeScrollId = requestAnimationFrame(animation);
-        } else {
-            page.activeScrollId = null;
-        }
-    }
-
-    page.activeScrollId = requestAnimationFrame(animation);
 }
 
 if (window.enableLyricEffects) {
@@ -86,6 +101,10 @@ function toggleDropdown(dropdownId = 'language-options') {
     const dropdown = document.getElementById(dropdownId);
     if (!dropdown) return;
     dropdown.classList.toggle('show');
+
+    if (dropdown.classList.contains('show')) {
+        getOrCreateLenis(dropdown);
+    }
 }
 
 function setDropdownOption(containerId, value, label) {
@@ -214,48 +233,6 @@ async function apiSignedAction(endpoint, payloadData) {
     });
 }
 
-// ==========================================
-// FLUENT SMOOTH SCROLLING ENGINE
-// ==========================================
-document.addEventListener("DOMContentLoaded", () => {
-    if (typeof Lenis === 'undefined') return;
-
-    // We use your placeholder here to bypass the bug
-    const scrollEngines = [];
-
-    // 1. Initialize Global Window Scroll
-    const mainLenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        orientation: 'vertical',
-        gestureOrientation: 'vertical',
-        smoothWheel: true,
-    });
-    scrollEngines.push(mainLenis);
-
-    // 2. Initialize Internal Panes (Submit & Detail Pages)
-    // This targets your Configuration Pane and the Lyric Preview
-    const internalPanes = document.querySelectorAll('.pane-content, .scrollable-panel, #det-preview');
-
-    internalPanes.forEach((pane) => {
-        const paneLenis = new Lenis({
-            wrapper: pane, // This makes it scroll the specific div, not the window
-            duration: 1.2,
-            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-            smoothWheel: true,
-        });
-        scrollEngines.push(paneLenis);
-    });
-
-    // 3. The Animation Loop (The Heartbeat)
-    function raf(time) {
-        // This tells every engine to update its position at the same time
-        scrollEngines.forEach(engine => engine.raf(time));
-        requestAnimationFrame(raf);
-    }
-
-    requestAnimationFrame(raf);
-});
 
 document.addEventListener("DOMContentLoaded", () => {
     const theme = localStorage.getItem('unisonTheme') || 'dark';
@@ -431,6 +408,9 @@ async function initDetailPage() {
         const isTTML = item.format === 'ttml';
         window.parsedLines = isTTML ? parseTTML(item.lyrics) : parseEnhancedLRC(item.lyrics);
         renderPreview('det-preview');
+
+        const previewContainer = document.getElementById('det-preview');
+        if (previewContainer) getOrCreateLenis(previewContainer);
 
     } catch (err) {
         document.getElementById('det-title').innerText = "Error Loading Lyrics";
@@ -733,6 +713,16 @@ function onYouTubeIframeAPIReady() {
 }
 
 function initSubmitPage() {
+    const textarea = document.getElementById('sub-lyrics');
+    if (textarea) {
+        textarea.addEventListener('wheel', (e) => {
+            e.stopPropagation();
+        }, { passive: true });
+    }
+
+    const pane = document.querySelector('.pane-content');
+    if (pane) getOrCreateLenis(pane);
+
     const audio = document.getElementById('local-player');
     const playBtn = document.getElementById('play-pause-btn');
     const audioSlider = document.getElementById('audio-slider');
@@ -1185,11 +1175,29 @@ async function submitLyricsForm() {
 window.toggleRawPayload = function () {
     const body = document.getElementById('raw-payload-body');
     const icon = document.getElementById('raw-toggle-icon');
+    const pre = document.getElementById('det-raw');
 
     body.classList.toggle('hidden');
-
     icon.classList.toggle('is-expanded');
     icon.classList.toggle('is-collapsed');
+
+    if (!body.classList.contains('hidden')) {
+        getOrCreateLenis(body);
+
+        // --- BEAUTIFICATION LOGIC ---
+        const rawText = pre.innerText;
+        // Apply the pattern highlighter
+        pre.innerHTML = highlightLyricsFormat(rawText);
+    }
+}
+
+function highlightLyricsFormat(text) {
+    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html = html.replace(/(\[[\d:.]+\]|<[\d:.]+>)/g, '<span class="lyric-time">$1</span>');
+    html = html.replace(/(&lt;\/?[a-zA-Z0-9:]+.*?&gt;)/g, '<span class="lyric-tag">$1</span>');
+    html = html.replace(/(&lt;[^&]+?)(&w+)=(&quot;.*?&quot;)/g, '$1<span class="lyric-attr">$2</span>=<span class="lyric-val">$3</span>');
+
+    return html;
 }
 
 function copyRawLyrics() {
