@@ -103,7 +103,7 @@ async function uploadToUnison(youtubeUrl) {
 | **Frontend** | Vanilla JavaScript (ES6+), HTML5, CSS3 (Custom Properties) |
 | **Security** | Web Crypto API (ECDSA P-256) for secure, client-side signing |
 | **Deployment** | Vercel |
-| **Design** | Google Material Symbols |
+| **Design** | Microsoft WinUI3 Fluent |
 
 <p align="center">
   Made with ❤️ by <a href="https://github.com/https://github.com/DarkForceFREEFIRE">Walker 🇱🇰</a>
