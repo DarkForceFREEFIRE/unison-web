@@ -1403,8 +1403,8 @@ main.locked-viewport {
 }
 
 #player-cover {
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
     border-radius: 8px;
     object-fit: cover;
     margin-bottom: 12px;
@@ -1437,6 +1437,8 @@ main.locked-viewport {
     justify-content: center;
     background: #111;
     color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
     z-index: 6;
 }
 
@@ -1520,6 +1522,7 @@ main.locked-viewport {
 #det-preview {
     flex: 1;
     overflow-y: auto;
+    position: relative;
     padding: 25vh 24px;
     display: flex;
     flex-direction: column;
@@ -1663,6 +1666,7 @@ body.effects-enabled .lyric-word.active.with-effects::after {
     margin-bottom: 20px;
     border-bottom: 1px solid var(--control-stroke);
     padding-bottom: 4px;
+    position: relative;
 }
 
 .source-tab {
@@ -1670,25 +1674,45 @@ body.effects-enabled .lyric-word.active.with-effects::after {
     font-size: 14px;
     font-weight: 600;
     color: var(--text-secondary);
-    padding: 4px 8px;
-    position: relative;
-    transition: color 0.2s;
+    padding: 6px 4px;
+    transition: color 0.2s ease;
+    z-index: 1;
 }
 
-.source-tab:hover,
-.source-tab.active {
+.source-tab:hover {
     color: var(--text-primary);
 }
 
-.source-tab.active::after {
-    content: '';
+.source-tab.active {
+    color: var(--accent);
+}
+
+.tab-indicator {
     position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 100%;
+    bottom: -1px;
     height: 3px;
     background: var(--accent);
     border-radius: 3px 3px 0 0;
+    transition: left 0.7s cubic-bezier(0.55, 0, 0.1, 0.9),
+        width 0.4s cubic-bezier(0.55, 0, 0.1, 1);
+    pointer-events: none;
+}
+
+#input-yt,
+#input-file {
+    animation: fluent-drill-in 0.4s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+@keyframes fluent-drill-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 #det-raw {

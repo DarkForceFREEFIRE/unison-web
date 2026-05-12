@@ -66,18 +66,19 @@ function winUIScroll(container, target) {
 
     const lenis = lenisInstances.get(container);
 
-    const targetTop = target.offsetTop;
     const targetHeight = target.clientHeight;
     const containerHeight = container.clientHeight;
 
-    const scrollToPosition = targetTop - (containerHeight / 2) + (targetHeight / 2);
-
     if (lenis) {
-        lenis.scrollTo(scrollToPosition, {
+        lenis.scrollTo(target, {
+            offset: - (containerHeight / 2) + (targetHeight / 2),
             duration: 0.45,
             easing: (t) => 1 - Math.pow(1 - t, 4)
         });
     } else {
+        const targetTop = target.offsetTop;
+        const scrollToPosition = targetTop - (containerHeight / 2) + (targetHeight / 2);
+
         container.scrollTo({
             top: scrollToPosition,
             behavior: 'smooth'
@@ -498,20 +499,71 @@ const page = {
         }
     },
 
+    init() {
+        const activeTab = document.querySelector('.source-tab.active');
+        if (activeTab) {
+            // Use requestAnimationFrame to ensure the browser has rendered 
+            // the layout so we get accurate widths/positions
+            requestAnimationFrame(() => {
+                this.moveIndicator(activeTab);
+            });
+        }
+    },
+
+    // Updated switchSource
     switchSource(src) {
         this.activeSource = src;
-        document.getElementById('tab-yt').classList.toggle('active', src === 'yt');
-        document.getElementById('tab-file').classList.toggle('active', src === 'file');
+
+        // 1. Update Tab Classes
+        const tabYt = document.getElementById('tab-yt');
+        const tabFile = document.getElementById('tab-file');
+        tabYt.classList.toggle('active', src === 'yt');
+        tabFile.classList.toggle('active', src === 'file');
+
+        // 2. Animate the Indicator
+        const activeTab = src === 'yt' ? tabYt : tabFile;
+        this.moveIndicator(activeTab);
+
+        // 3. Toggle Visibility (Input Panes)
         document.getElementById('input-yt').classList.toggle('hidden', src !== 'yt');
         document.getElementById('input-file').classList.toggle('hidden', src !== 'file');
 
+        // 4. Toggle Visibility (Players)
         document.getElementById('yt-player-container').classList.toggle('hidden', src !== 'yt');
         document.getElementById('custom-audio-player').classList.toggle('hidden', src !== 'file');
-        document.getElementById('media-placeholder')?.classList.add('hidden');
 
+        const placeholder = document.getElementById('media-placeholder');
+        if (placeholder) placeholder.classList.add('hidden');
+
+        // 5. Player Logic
         this.stopSyncLoop();
-        if (src === 'file' && ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
-        if (src === 'yt') document.getElementById('local-player')?.pause();
+        if (src === 'file' && typeof ytPlayer !== 'undefined' && ytPlayer?.pauseVideo) {
+            ytPlayer.pauseVideo();
+        }
+        if (src === 'yt') {
+            document.getElementById('local-player')?.pause();
+        }
+    },
+
+    moveIndicator(activeElement) {
+        const indicator = document.querySelector('.tab-indicator');
+        if (!indicator || !activeElement) return;
+
+        const tabRect = activeElement.getBoundingClientRect();
+        const parentRect = activeElement.parentElement.getBoundingClientRect();
+
+        const left = tabRect.left - parentRect.left;
+        const width = tabRect.width;
+
+        indicator.style.left = `${left}px`;
+        indicator.style.width = `${width}px`;
+    },
+
+    init() {
+        const activeTab = document.querySelector('.source-tab.active');
+        if (activeTab) {
+            setTimeout(() => this.moveIndicator(activeTab), 100);
+        }
     },
 
     parseYoutubeUrl(url) {
@@ -713,6 +765,7 @@ function onYouTubeIframeAPIReady() {
 }
 
 function initSubmitPage() {
+    page.init();
     const textarea = document.getElementById('sub-lyrics');
     if (textarea) {
         textarea.addEventListener('wheel', (e) => {
@@ -722,6 +775,9 @@ function initSubmitPage() {
 
     const pane = document.querySelector('.pane-content');
     if (pane) getOrCreateLenis(pane);
+
+    const syncPreview = document.getElementById('sync-preview-content');
+    if (syncPreview) getOrCreateLenis(syncPreview);
 
     const audio = document.getElementById('local-player');
     const playBtn = document.getElementById('play-pause-btn');
