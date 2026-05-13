@@ -1,6 +1,3 @@
-/**
- * Canonicalizes a JSON object to match Python's strict signing requirements.
- */
 export function canonicalJson(obj) {
     if (obj === null || obj === undefined) return 'null';
     if (typeof obj === 'boolean') return obj ? 'true' : 'false';
@@ -13,9 +10,6 @@ export function canonicalJson(obj) {
     }
 }
 
-/**
- * Converts an ArrayBuffer to a Base64 string.
- */
 export function arrayBufferToBase64(buffer) {
     let binary = '';
     const bytes = new Uint8Array(buffer);
@@ -25,11 +19,8 @@ export function arrayBufferToBase64(buffer) {
     return window.btoa(binary);
 }
 
-/**
- * Signs a payload using the WebCrypto API with ECDSA P-256
- */
 export async function signPayload(privateKeyJwk, payloadObj) {
-    // 1. Import Key
+     1. Import Key
     const key = await window.crypto.subtle.importKey(
         "jwk",
         privateKeyJwk,
@@ -38,18 +29,18 @@ export async function signPayload(privateKeyJwk, payloadObj) {
         ["sign"]
     );
 
-    // 2. Canonicalize & Encode
+     2. Canonicalize & Encode
     const payloadStr = canonicalJson(payloadObj);
     const encoder = new TextEncoder();
     const data = encoder.encode(payloadStr);
 
-    // 3. Sign (Outputs 64 bytes raw r|s)
+     3. Sign (Outputs 64 bytes raw r|s)
     const signatureBuffer = await window.crypto.subtle.sign(
         { name: "ECDSA", hash: { name: "SHA-256" } },
         key,
         data
     );
 
-    // 4. Base64 Encode
+     4. Base64 Encode
     return arrayBufferToBase64(signatureBuffer);
 }

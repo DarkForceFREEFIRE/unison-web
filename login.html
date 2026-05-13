@@ -1,32 +1,39 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Unison</title>
+    <script>
+        const theme = localStorage.getItem('unisonTheme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+    </script>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/svg+xml" href="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true">
-
 </head>
+
 <body class="flex-center" style="height: 100vh;">
-    
+
     <div class="panel animate-fade-up" style="max-width: 400px; width: 100%; text-align: center;">
-        <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Logo" style="width: 56px; margin-bottom: 16px;">
-        <h2 style="font-size: 1.5rem; margin-bottom: 8px;">Unison Publisher</h2>
-        <p class="text-secondary mb-2" style="font-size: 0.9rem;">Login to your Better Lyrics account</p>
-        
+        <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Logo"
+            style="width: 56px; margin-bottom: 16px; border-radius: 8px;">
+        <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">Unison Publisher</h2>
+        <p class="text-secondary mb-3" style="font-size: 14px;">Login to your Better Lyrics account</p>
+
         <button class="btn btn-primary btn-full mt-2" onclick="document.getElementById('identity-file').click()">
-            <span class="material-symbols-rounded">upload_file</span> Upload Identity JSON
+            <span class="fluent-icon"></span> Upload Identity JSON
         </button>
-        <input type="file" id="identity-file" accept=".json" style="display:none;" onchange="handleIdentityUpload(event)">
-        
+        <input type="file" id="identity-file" accept=".json" style="display:none;"
+            onchange="handleIdentityUpload(event)">
+
         <hr>
-        
+
         <button class="btn btn-full" onclick="loginDefault()">
-            <span class="material-symbols-rounded">public</span> Use Public Account
+            <span class="fluent-icon"></span> Use Public Account
         </button>
     </div>
 
     <script src="app.js"></script>
 </body>
+
 </html>

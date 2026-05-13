@@ -1,19 +1,25 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lyric Details | Unison</title>
+    <script>
+        const theme = localStorage.getItem('unisonTheme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+    </script>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/svg+xml" href="https://composer.boidu.dev/logo.svg">
 
 </head>
+
 <body id="page-detail">
 
     <header class="top-nav">
         <div class="nav-left">
             <a href="index.html" class="logo">
-                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
+                <img src="logo.svg" alt="Unison">
                 <div class="logo-text">
                     <h1>Unison</h1>
                     <span>Lyric Inspector</span>
@@ -25,11 +31,12 @@
             </nav>
         </div>
         <div class="nav-right">
-            <a href="javascript:history.back()" class="btn"><span class="material-symbols-rounded">arrow_back</span> Back</a>
+            <a href="javascript:history.back()" class="btn"><span class="fluent-icon"></span>
+                Back</a>
         </div>
     </header>
 
-    <main class="animate-fade-up">
+    <main class="animate-fade-up locked-viewport">
         <div class="detail-container">
 
             <div class="header-card panel">
@@ -37,53 +44,62 @@
                     <h2 id="det-title">Loading...</h2>
                     <p id="det-artist" class="text-secondary">Loading...</p>
                     <div class="badges-row">
-                        <span class="badge"><span class="material-symbols-rounded" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">code</span> <span id="det-format">--</span></span>
-                        <span class="badge"><span class="material-symbols-rounded" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">sync</span> <span id="det-sync">--</span></span>
-                        <span class="badge"><span class="material-symbols-rounded" style="font-size: 14px; vertical-align: middle; margin-right: 4px;">translate</span> <span id="det-lang">--</span></span>
+                        <span class="badge"><span class="fluent-icon"
+                                style="font-size: 14px; vertical-align: middle; margin-right: 4px;"></span> <span
+                                id="det-format">--</span></span>
+                        <span class="badge"><span class="fluent-icon"
+                                style="font-size: 14px; vertical-align: middle; margin-right: 4px;"></span> <span
+                                id="det-sync">--</span></span>
+                        <span class="badge"><span class="fluent-icon"
+                                style="font-size: 14px; vertical-align: middle; margin-right: 4px;"></span>
+                            <span id="det-lang">--</span></span>
                     </div>
                 </div>
                 <div class="score-box">
                     <div class="vote-score" id="det-score">0.0</div>
-                    <div class="text-secondary" id="det-votecount" style="font-size: 0.85rem; font-weight: 600;">0 votes</div>
+                    <div class="text-secondary" id="det-votecount" style="font-size: 0.85rem; font-weight: 600;">0 votes
+                    </div>
                 </div>
             </div>
 
             <div class="action-bar" style="margin-bottom: 24px;">
                 <button class="btn" onclick="submitVote(1)">
-                    <span class="material-symbols-rounded">thumb_up</span> Upvote
+                    <span class="fluent-icon"></span> Upvote
                 </button>
                 <button class="btn" onclick="submitVote(-1)">
-                    <span class="material-symbols-rounded">thumb_down</span> Downvote
+                    <span class="fluent-icon"></span> Downvote
                 </button>
                 <button class="btn" onclick="downloadLyrics()">
-                    <span class="material-symbols-rounded">download</span> Download File
+                    <span class="fluent-icon"></span> Download File
                 </button>
                 <button class="btn btn-danger" onclick="document.getElementById('report-dialog').showModal()">
-                    <span class="material-symbols-rounded">flag</span> Report Issue
+                    <span class="fluent-icon"></span> Report Issue
                 </button>
             </div>
 
             <div class="content-grid split-view">
 
                 <div class="media-container panel" style="padding: 0; border: none;">
+                    <div id="det-media-agent-tag" class="vocal-agent-tag"></div>
                     <div id="yt-player-container">
                         <div id="yt-player"></div>
                     </div>
                     <div id="media-placeholder" class="text-muted flex-center">
-                        <span class="material-symbols-rounded spinner" style="font-size: 48px; margin-bottom: 8px;">hourglass_empty</span>
+                        <span class="fluent-icon spinner" style="font-size: 48px; margin-bottom: 8px;"></span>
                         Loading Media...
                     </div>
                     <div id="media-error-overlay" class="hidden">
-                        <span class="material-symbols-rounded" style="font-size: 48px; color: var(--danger)">error</span>
+                        <span class="fluent-icon" style="font-size: 48px; color: var(--danger)"></span>
                         <h4 style="margin-top: 16px;">Video Unavailable</h4>
-                        <p class="text-secondary" style="font-size: 0.9rem; margin-top: 8px;">The creator may have disabled embedding for this video.</p>
+                        <p class="text-secondary" style="font-size: 0.9rem; margin-top: 8px;">The creator may have
+                            disabled embedding for this video.</p>
                     </div>
                 </div>
 
                 <div class="panel scrollable-panel" style="padding: 0;">
                     <div class="panel-header flex-between" style="border-bottom: 1px solid var(--border-color);">
                         <label class="section-label" style="margin: 0;">Synced Preview</label>
-                        <span class="material-symbols-rounded text-muted">visibility</span>
+                        <span class="fluent-icon text-muted"></span>
                     </div>
                     <div id="det-preview" class="panel-body">
                         <div class="empty-state text-muted">Loading preview...</div>
@@ -92,16 +108,23 @@
             </div>
 
             <div class="panel" style="padding: 0; border-radius: var(--radius-md); overflow: hidden; margin-top: 24px;">
-                <div class="panel-header flex-between" style="cursor: pointer; padding: 16px 24px; transition: background 0.2s;" onclick="toggleRawPayload()">
-                    <label class="section-label" style="margin: 0; pointer-events: none; color: var(--text-primary); font-size: 0.85rem;">Raw Payload</label>
+                <div class="panel-header flex-between"
+                    style="cursor: pointer; padding: 16px 24px; transition: background 0.2s;"
+                    onclick="toggleRawPayload()">
+                    <label class="section-label"
+                        style="margin: 0; pointer-events: none; color: var(--text-primary); font-size: 0.85rem;">Raw
+                        Payload</label>
                     <div style="display:flex; gap:12px; align-items:center;">
                         <button class="btn btn-small" onclick="event.stopPropagation(); copyRawLyrics()">
-                            <span class="material-symbols-rounded" style="font-size: 16px;">content_copy</span> Copy
+                            <span class="fluent-icon" style="font-size: 16px;"></span> Copy
                         </button>
-                        <span id="raw-toggle-icon" class="material-symbols-rounded text-muted">expand_more</span>
+
+                        <!-- We give it a starting class 'is-expanded' -->
+                        <span id="raw-toggle-icon" class="fluent-icon is-expanded"></span>
                     </div>
                 </div>
-                <div id="raw-payload-body" class="panel-body hidden" style="border-top: 1px solid var(--border-color); padding: 24px;">
+                <div id="raw-payload-body" class="panel-body hidden"
+                    style="border-top: 1px solid var(--border-color); padding: 24px;">
                     <pre id="det-raw"></pre>
                 </div>
             </div>
@@ -112,20 +135,32 @@
     <dialog id="report-dialog">
 
         <h3 style="margin-bottom: 16px; font-size: 1.5rem; letter-spacing: -0.02em;">Report Lyrics</h3>
-        <p class="text-secondary mb-3" style="font-size: 0.9rem;">Help us keep Unison accurate by reporting incorrect or malicious uploads.</p>
+        <p class="text-secondary mb-3" style="font-size: 0.9rem;">Help us keep Unison accurate by reporting incorrect or
+            malicious uploads.</p>
         <div class="form-group">
             <label>Reason for report</label>
-            <select id="report-reason" class="input-element">
-                <option value="wrong_song">Wrong Song</option>
-                <option value="bad_sync">Bad Synchronization</option>
-                <option value="offensive">Offensive Content</option>
-                <option value="spam">Spam / Junk</option>
-                <option value="other">Other</option>
-            </select>
+            <div class="fluent-select-container" id="report-dropdown">
+                <div class="fluent-select-trigger" onclick="toggleDropdown('report-options')">
+                    <span class="fluent-select-text" id="selected-report-reason-text">Wrong Song</span>
+                    <span class="fluent-icon"></span>
+                </div>
+                <ul class="fluent-select-dropdown" id="report-options">
+                    <li class="selected" onclick="setDropdownOption('report-dropdown', 'wrong_song', 'Wrong Song')">
+                        Wrong Song</li>
+                    <li onclick="setDropdownOption('report-dropdown', 'bad_sync', 'Bad Synchronization')">Bad
+                        Synchronization</li>
+                    <li onclick="setDropdownOption('report-dropdown', 'offensive', 'Offensive Content')">Offensive
+                        Content</li>
+                    <li onclick="setDropdownOption('report-dropdown', 'spam', 'Spam / Junk')">Spam / Junk</li>
+                    <li onclick="setDropdownOption('report-dropdown', 'other', 'Other')">Other</li>
+                </ul>
+                <input type="hidden" id="report-reason" value="wrong_song">
+            </div>
         </div>
         <div class="form-group">
             <label>Additional Details (Optional)</label>
-            <textarea id="report-details" class="input-element" rows="3" placeholder="Provide more context..."></textarea>
+            <textarea id="report-details" class="input-element" rows="3"
+                placeholder="Provide more context..."></textarea>
         </div>
         <div class="flex-between mt-3">
             <button class="btn" onclick="document.getElementById('report-dialog').close()">Cancel</button>
@@ -135,6 +170,8 @@
 
     <div id="toast-container"></div>
     <script src="app.js"></script>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </body>
+
 </html>

@@ -1,18 +1,24 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unison | Community Lyrics</title>
+    <script>
+        const theme = localStorage.getItem('unisonTheme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+    </script>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/svg+xml" href="https://composer.boidu.dev/logo.svg">
+    <link rel="icon" type="image/svg+xml" href="logo_mono.svg">
 </head>
+
 <body id="page-search">
 
     <header class="top-nav">
         <div class="nav-left">
             <a href="index.html" class="logo">
-                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
+                <img src="logo.svg" alt="Unison">
                 <div class="logo-text">
                     <h1>Unison</h1>
                     <span>Community Lyrics</span>
@@ -24,21 +30,21 @@
             </nav>
         </div>
         <div class="nav-right">
+
+
+            <a href="submit.html" class="btn btn-primary">
+                <span class="fluent-icon"></span> <span class="hide-mobile">Submit Lyrics</span>
+            </a>
             <div class="search-bar">
-                <span class="material-symbols-rounded">search</span>
+                <span class="fluent-icon"></span>
                 <input type="text" id="global-search" class="input-element" placeholder="Search songs, artists...">
             </div>
-            
-            <a href="submit.html" class="btn btn-primary">
-                <span class="material-symbols-rounded">add</span> <span class="hide-mobile">Submit Lyrics</span>
-            </a>
-
             <button class="btn btn-icon" onclick="openFeedbackHub()" title="Feedback Hub">
-                <span class="material-symbols-rounded">chat</span>
+                <span class="fluent-icon"></span>
             </button>
 
             <a href="account.html" class="btn btn-icon" title="Account Settings">
-                <span class="material-symbols-rounded">person</span>
+                <span class="fluent-icon"></span>
             </a>
         </div>
     </header>
@@ -49,73 +55,84 @@
                 <h2 id="greeting-text">Good Morning, User</h2>
                 <p class="text-secondary" id="time-text">-- : --</p>
             </div>
-            
+
             <div class="animate-fade-up" style="animation-delay: 0.1s;">
                 <h3 class="mb-2" style="font-size:1.4rem;">Quick access</h3>
                 <div class="products-grid">
-                    
+
+                    <!-- Card 1 -->
                     <div class="product-card">
-                        <div class="product-header" style="background-image: url('https://camo.githubusercontent.com/0412e5bdfc5dca7a469578ee0e766ab341d1db7f367b1c5e01d2d42c8129c555/68747470733a2f2f7265732e636c6f7564696e6172792e636f6d2f626f6964752f696d6167652f75706c6f61642f745f62616e6e65722f76313735393533363833332f626c2f62616e6e65722e706e67');">
+                        <div class="product-header header-gradient-1">
                             <div class="product-icon">
-                                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Better Lyrics">
+                                <img src="logo_mono.svg" alt="Better Lyrics">
                             </div>
                         </div>
                         <div class="product-body">
                             <h3 class="product-title">Better Lyrics</h3>
-                            <p class="product-desc">Enhance YouTube Music with beautiful time-synced lyrics, multilingual support, real-time translations and more.</p>
+                            <p class="product-desc">Enhance YouTube Music with beautiful time-synced lyrics,
+                                multilingual support, real-time translations and more.</p>
                             <div class="product-footer">
-                                <a href="https://better-lyrics.boidu.dev/" target="_blank" class="btn btn-primary" style="margin-left:auto;">
-                                    Visit <span class="material-symbols-rounded" style="font-size: 18px;">arrow_outward</span>
+                                <a href="https://better-lyrics.boidu.dev/" target="_blank"
+                                    class="btn btn-primary btn-visit">
+                                    Visit <span class="fluent-icon icon-sm"></span>
                                 </a>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Card 2 -->
                     <div class="product-card">
-                        <div class="product-header" style="background: linear-gradient(135deg, #1f2937, #374151);">
+                        <div class="product-header header-gradient-2">
                             <div class="product-icon">
-                                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Composer">
+                                <span class="fluent-icon icon-lg"></span>
                             </div>
                         </div>
                         <div class="product-body">
                             <h3 class="product-title">Lyrics Composer</h3>
-                            <p class="product-desc">Advanced, intuitive word-synced lyrics composer designed directly for the Better Lyrics ecosystem.</p>
+                            <p class="product-desc">Advanced, intuitive word-synced lyrics composer designed
+                                directly for the Better Lyrics ecosystem.</p>
                             <div class="product-footer">
-                                <a href="https://composer.boidu.dev/" target="_blank" class="btn btn-primary" style="margin-left:auto;">
-                                    Visit <span class="material-symbols-rounded" style="font-size: 18px;">arrow_outward</span>
+                                <a href="https://composer.boidu.dev/" target="_blank" class="btn btn-primary btn-visit">
+                                    Visit <span class="fluent-icon icon-sm"></span>
                                 </a>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Card 3 -->
                     <div class="product-card">
-                        <div class="product-header" style="background: linear-gradient(135deg, #4338ca, #312e81);">
+                        <div class="product-header header-gradient-3">
                             <div class="product-icon">
-                                <span class="material-symbols-rounded" style="font-size:36px;">lyrics</span>
+                                <span class="fluent-icon icon-lg"></span>
                             </div>
                         </div>
                         <div class="product-body">
                             <h3 class="product-title">LySy</h3>
-                            <p class="product-desc">Simple, lightweight and fast word-synced lyrics composer for creating ELRC payloads effortlessly.</p>
+                            <p class="product-desc">Simple, lightweight and fast word-synced lyrics composer for
+                                creating ELRC payloads effortlessly.</p>
                             <div class="product-footer">
-                                <a href="https://pxeemo.github.io/LySy/" target="_blank" class="btn btn-primary" style="margin-left:auto;">
-                                    Visit <span class="material-symbols-rounded" style="font-size: 18px;">arrow_outward</span>
+                                <a href="https://pxeemo.github.io/LySy/" target="_blank"
+                                    class="btn btn-primary btn-visit">
+                                    Visit <span class="fluent-icon icon-sm"></span>
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                </div> 
-            </div>
+                </div>
 
-            <div class="animate-fade-up" style="animation-delay: 0.2s; margin-top: 48px;">
-                <h3 class="mb-2" style="font-size:1.4rem;">Community Members</h3>
-                <p class="text-secondary mb-3" style="font-size: 0.95rem; margin-top: -8px;">Say hello to recently active Unison users.</p>
-                
-                <div class="users-grid" id="active-users-list">
-                    <div class="empty-state text-secondary" style="min-height: 120px;">
-                        <span class="material-symbols-rounded spinner" style="vertical-align: middle; margin-right:8px;">sync</span> 
-                        Loading members...
+                <div class="animate-fade-up" style="animation-delay: 0.2s; margin-top: 48px;">
+                    <h3 class="mb-2" style="font-size:1.4rem;">Community Members</h3>
+                    <p class="text-secondary mb-3" style="font-size: 0.95rem; margin-top: -8px;">Say hello to
+                        recently
+                        active Unison users.</p>
+
+                    <div class="users-grid" id="active-users-list">
+
+                        <div class="empty-state text-secondary" style="min-height: 120px;">
+                            <span class="fluent-icon spinner" style="vertical-align: middle; margin-right:8px;"></span>
+                            Loading members...
+                        </div>
                     </div>
                 </div>
             </div>
@@ -126,34 +143,34 @@
                 <h2 id="search-header">Search Results</h2>
             </div>
             <div class="cards-grid" id="search-results">
+
             </div>
         </div>
     </main>
 
-    <footer class="app-footer">
-        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
-            Made by Walker
-            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
+    <dialog id="feedback-dialog">
+        <div class="flex-between" style="margin-bottom: 16px;">
+            <h3 style="font-size: 1.5rem; margin: 0;">Feedback Hub</h3>
+            <button class="btn btn-icon btn-small-close"
+                onclick="document.getElementById('feedback-dialog').close()"><span class="fluent-icon"></span></button>
         </div>
-    </footer>
+        <p class="text-secondary mb-3" style="font-size: 0.9rem;">Share feature requests or report bugs.</p>
 
-        <dialog id="feedback-dialog">
-            <div class="flex-between" style="margin-bottom: 16px;">
-                <h3 style="font-size: 1.5rem; margin: 0;">Feedback Hub</h3>
-                <button class="btn btn-icon btn-small-close" onclick="document.getElementById('feedback-dialog').close()"><span class="material-symbols-rounded">close</span></button>
-            </div>
-            <p class="text-secondary mb-3" style="font-size: 0.9rem;">Share feature requests or report bugs. (Saved locally in your browser)</p>
-            
-            <div class="form-group">
-                <textarea id="feedback-input" class="input-element" rows="3" placeholder="What should we improve?"></textarea>
-            </div>
-            <button class="btn btn-primary btn-full mb-3" onclick="submitFeedback()">Submit Feedback</button>
+        <div class="form-group">
+            <textarea id="feedback-input" class="input-element" rows="3"
+                placeholder="What should we improve?"></textarea>
+        </div>
+        <button class="btn btn-primary btn-full mb-3" onclick="submitFeedback()">Submit Feedback</button>
 
-            <h4 class="mb-2" style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase;">Your Recent Feedback</h4>
-            <div id="feedback-list" style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
-            </div>
-        </dialog>
+        <h4 class="mb-2" style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase;">Your Recent
+            Feedback</h4>
+        <div id="feedback-list"
+            style="max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+        </div>
+    </dialog>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
     <script src="app.js"></script>
-    
+
 </body>
+
 </html>
