@@ -72,7 +72,15 @@
                 <button class="btn" onclick="document.getElementById('avatar-upload').click()"><span class="fluent-icon"
                         ; style="font-size: 12px;"></span> Upload</button>
             </div>
-
+                <input type="file" id="avatar-upload" accept="image/png, image/jpeg, image/webp" style="display:none;" onchange="handleAvatarUpload(event)">
+                <div class="flex-center gap-1">
+                    <button id="remove-avatar" class="btn btn-danger" onclick="removeAvatar()" style="visibility: hidden;">
+                        Remove Avatar
+                    </button>
+                    <button class="btn" onclick="document.getElementById('avatar-upload').click()">
+                        <span class="material-symbols-rounded">upload</span> <span class="hide-mobile">Upload</span>
+                    </button>
+                </div>
             <div class="flex-between mb-3">
                 <div>
                     <h4 style="font-weight: 600;">Dark Theme</h4>

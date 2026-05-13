@@ -18,6 +18,7 @@ const DEFAULT_IDENTITY = {
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmb290cWxxem13YnBxdm9oaXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTgyMjYsImV4cCI6MjA5MDgzNDIyNn0.yYwJ_YWhlMHGDVTQvbwAfVEPO9cJVo5QIlrllGDobSI";
 const FEEDBACK_API_URL = "https://rfootqlqzmwbpqvohiqu.supabase.co/functions/v1/submit-feedback";
 const USERS_API_URL = "https://rfootqlqzmwbpqvohiqu.supabase.co/functions/v1/hyper-action";
+const BETTER_LYRICS_LOGO = "https://better-lyrics.boidu.dev/icons/logo.svg";
 
 
 let ytPlayer = null;
@@ -444,8 +445,17 @@ function initAccountPage() {
     document.getElementById('acc-name').innerText = user.displayName || 'Unknown User';
 
     const avatarPreview = document.getElementById('acc-avatar-preview');
+    const removeAvatar = document.getElementById('remove-avatar');
     const savedAvatar = localStorage.getItem('unisonAvatar');
-    if (user.keyId !== DEFAULT_IDENTITY.keyId && savedAvatar) avatarPreview.src = savedAvatar;
+    
+    if (user.keyId === DEFAULT_IDENTITY.keyId) {
+        avatarPreview.src = BETTER_LYRICS_LOGO;
+        
+        document.getElementById('avatar-settings-block').style.display = 'none';
+    } else if (savedAvatar) {
+        avatarPreview.src = savedAvatar;
+        if (removeAvatar) removeAvatar.removeAttribute('style');
+    }
 
     const privateDetails = document.getElementById('private-details');
     if (user.keyId !== DEFAULT_IDENTITY.keyId) {
@@ -662,7 +672,7 @@ const page = {
     setDefaultCover(title) {
         document.getElementById('player-title').innerText = title || "Local Audio";
         document.getElementById('player-artist').innerText = "Unknown Artist";
-        document.getElementById('player-cover').src = 'https://better-lyrics.boidu.dev/icons/logo.svg';
+        document.getElementById('player-cover').src = BETTER_LYRICS_LOGO;
         document.getElementById('player-bg').style.backgroundImage = 'none';
         document.getElementById('player-bg').style.backgroundColor = '#111';
     },
@@ -1387,12 +1397,13 @@ function handleAvatarUpload(event) {
     reader.onload = function (e) {
         localStorage.setItem('unisonAvatar', e.target.result);
         const preview = document.getElementById('acc-avatar-preview');
+        const removeAvatar = document.getElementById('remove-avatar');
         if (preview) preview.src = e.target.result;
+        if (removeAvatar) removeAvatar.removeAttribute('style');
         showToast("Avatar updated successfully!", "success");
     };
     reader.readAsDataURL(file);
 }
-
 
 async function loadActiveUsers() {
     const list = document.getElementById('active-users-list');
@@ -1418,8 +1429,8 @@ async function loadActiveUsers() {
             const delay = index * 0.05;
 
             const isDefaultUser = u.key_id === DEFAULT_IDENTITY.keyId;
-            const imgSrc = isDefaultUser
-                ? 'https://better-lyrics.boidu.dev/icons/logo.svg'
+            const imgSrc = isDefaultUser 
+                ? BETTER_LYRICS_LOGO 
                 : u.avatar_data || 'user.png';
 
             return `
@@ -1441,26 +1452,42 @@ async function loadActiveUsers() {
         list.innerHTML = `<div class="empty-state text-muted" style="min-height: 100px; color: var(--danger);">Failed to load community members.</div>`;
     }
 }
+
+function removeAvatar() {
+    const avatarData = localStorage.getItem('unisonAvatar');
+    if (!avatarData) return;
+
+    localStorage.removeItem('unisonAvatar');
+    const preview = document.getElementById('acc-avatar-preview');
+    const removeAvatar = document.getElementById('remove-avatar');
+    if (preview) preview.src = BETTER_LYRICS_LOGO;
+    if (removeAvatar) removeAvatar.style.visibility = "hidden";
+    
+    showToast("Avatar successfully removed from profile", "success");
+
+    logCurrentUser();
+}
+
 async function logCurrentUser() {
     const user = JSON.parse(localStorage.getItem('unisonIdentity'));
     if (!user) return;
-
+    
     const avatarData = localStorage.getItem('unisonAvatar');
-
+    
     try {
         await fetch(USERS_API_URL, {
             method: 'POST',
-            headers: {
+            headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}` 
             },
-            body: JSON.stringify({
+            body: JSON.stringify({ 
                 username: user.displayName || 'Unknown User',
                 keyId: user.keyId,
-                avatarData: avatarData || null
+                avatarData: avatarData || BETTER_LYRICS_LOGO
             })
         });
-    } catch (e) {
+    } catch(e) {
         console.warn("Could not log user presence", e);
     }
 }
