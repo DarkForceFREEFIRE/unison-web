@@ -1,35 +1,36 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Submissions | Unison</title>
+    <script>
+        const theme = localStorage.getItem('unisonTheme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+    </script>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/svg+xml" href="https://composer.boidu.dev/logo.svg">
 </head>
+
 <body id="page-submissions">
 
     <header class="top-nav">
         <div class="nav-left">
             <a href="index.html" class="logo">
-                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
+                <img src="logo.svg" alt="Unison">
                 <div class="logo-text">
-                    <h1>Unison</h1>
-                    <span>Community Lyrics</span>
+                    <h1>Unison</h1><span>Community Lyrics</span>
                 </div>
             </a>
             <nav class="nav-links">
-                <a href="index.html" id="nav-search">Search</a>
-                <a href="submissions.html" id="nav-submissions">My Submissions</a>
+                <a href="index.html">Search</a>
+                <a href="submissions.html" class="active">My Submissions</a>
             </nav>
         </div>
         <div class="nav-right">
-            <a href="submit.html" class="btn btn-primary">
-                <span class="material-symbols-rounded">add</span> <span class="hide-mobile">Submit Lyrics</span>
-            </a>
-            <a href="account.html" class="btn btn-icon" title="Account Settings">
-                <span class="material-symbols-rounded">person</span>
-            </a>
+            <a href="submit.html" class="btn btn-primary"><span class="fluent-icon"></span> <span
+                    class="hide-mobile">Submit Lyrics</span></a>
+            <a href="account.html" class="btn btn-icon"><span class="fluent-icon"></span></a>
         </div>
     </header>
 
@@ -37,18 +38,16 @@
         <div class="page-header animate-fade-up">
             <h2 id="search-header">My Submissions</h2>
         </div>
-        <div class="cards-grid" id="search-results">
-            <!-- Dynamic Submissions grid logic identical to search injected via app.js -->
+        <div class="info-bar animate-fade-up">
+            <span class="fluent-icon"></span>
+            <span>Due to API limitations, Only the latest 50 submissions are displayed.</span>
         </div>
+        <div class="cards-grid" id="search-results"></div>
     </main>
 
-    <footer class="app-footer">
-        <div class="flex-center gap-1 text-muted" style="font-size: 0.85rem; font-weight: 500;">
-            Made by Walker
-            <img src="https://github.com/DarkForceFREEFIRE/unison-web/blob/main/logo.png?raw=true" alt="Walker Logo" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;">
-        </div>
-    </footer>
-
+    <div id="toast-container"></div>
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>

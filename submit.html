@@ -1,20 +1,27 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Lyrics | Unison</title>
+    <script>
+        const theme = localStorage.getItem('unisonTheme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+    </script>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/svg+xml" href="https://composer.boidu.dev/logo.svg">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
 </head>
+
 <body id="page-submit">
 
     <header class="top-nav">
         <div class="nav-left">
             <a href="index.html" class="logo">
-                <img src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Unison">
-                <div class="logo-text"><h1>Unison</h1><span>Submit Lyrics</span></div>
+                <img src="logo.svg" alt="Unison">
+                <div class="logo-text">
+                    <h1>Unison</h1><span>Submit Lyrics</span>
+                </div>
             </a>
             <nav class="nav-links">
                 <a href="index.html">Search</a>
@@ -22,73 +29,174 @@
             </nav>
         </div>
         <div class="nav-right">
-            <a href="account.html" class="btn btn-icon"><span class="material-symbols-rounded">person</span></a>
+            <a href="account.html" class="btn btn-icon"><span class="fluent-icon"></span></a>
         </div>
     </header>
 
-    <main class="animate-fade-up">
-        <div class="page-header" style="text-align: left; margin-bottom: 20px;">
+    <main class="animate-fade-up locked-viewport">
+        <div class="page-header">
             <h2>Submit & Sync</h2>
-            <p class="text-secondary">Sync your lyrics with a YouTube link or local audio file.</p>
+            <p class="text-secondary" style="font-size: 14px;">Sync your lyrics with a YouTube link or local audio file.
+            </p>
         </div>
 
         <div class="split-layout submit-layout">
-
             <div class="form-pane">
+                <!-- ZONE 1: The Scrollable Configuration Section -->
                 <div class="pane-content">
                     <div class="source-tabs">
                         <div class="source-tab active" id="tab-yt" onclick="page.switchSource('yt')">YouTube Link</div>
                         <div class="source-tab" id="tab-file" onclick="page.switchSource('file')">Audio File</div>
+                        <div class="tab-indicator"></div>
                     </div>
 
                     <div id="input-yt">
                         <div class="form-group"><label>YouTube URL</label>
-                            <input type="text" id="sub-url-input" class="input-element" placeholder="https://www.youtube.com/watch?v=..." oninput="page.parseYoutubeUrl(this.value)">
+                            <input type="text" id="sub-url-input" class="input-element"
+                                placeholder="https://www.youtube.com/watch?v=..."
+                                oninput="page.parseYoutubeUrl(this.value)">
                         </div>
                     </div>
                     <div id="input-file" class="hidden">
                         <div class="form-group"><label>Upload Audio (Preview & Metadata)</label>
-                            <input type="file" id="audio-file" class="input-element" accept="audio/*" onchange="page.loadLocalFile(event)">
+                            <input type="file" id="audio-file" class="input-element" accept="audio/*"
+                                onchange="page.loadLocalFile(event)">
                         </div>
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group"><label>Song Title *</label><input type="text" id="sub-song" class="input-element"></div>
-                        <div class="form-group"><label>Artist *</label><input type="text" id="sub-artist" class="input-element"></div>
+                        <div class="form-group"><label>Song Title *</label><input type="text" id="sub-song"
+                                class="input-element"></div>
+                        <div class="form-group"><label>Artist *</label><input type="text" id="sub-artist"
+                                class="input-element"></div>
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group"><label>Video ID</label><input type="text" id="sub-vid" class="input-element" readonly placeholder="Auto-parsed"></div>
-                        <div class="form-group"><label>Duration (sec) *</label><input type="number" id="sub-duration" class="input-element"></div>
+                        <div class="form-group"><label>Video ID</label><input type="text" id="sub-vid"
+                                class="input-element" readonly placeholder="Auto-parsed"></div>
+                        <div class="form-group"><label>Duration (sec) *</label><input type="number" id="sub-duration"
+                                class="input-element"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group"><label>Language</label>
+                            <div class="fluent-select-container" id="language-dropdown">
+                                <div class="fluent-select-trigger" onclick="toggleDropdown()">
+                                    <span id="selected-language-text" class="fluent-select-text">English</span>
+                                    <span class="fluent-icon"></span>
+                                </div>
+                                <ul class="fluent-select-dropdown" id="language-options">
+                                    <li onclick="setLanguage('en', 'English')">English</li>
+                                    <li onclick="setLanguage('es', 'Español')">Español</li>
+                                    <li onclick="setLanguage('fr', 'Français')">Français</li>
+                                    <li onclick="setLanguage('de', 'Deutsch')">Deutsch</li>
+                                    <li onclick="setLanguage('it', 'Italiano')">Italiano</li>
+                                    <li onclick="setLanguage('pt', 'Português')">Português</li>
+                                    <li onclick="setLanguage('ru', 'Русский')">Русский</li>
+                                    <li onclick="setLanguage('ja', '日本語')">日本語</li>
+                                    <li onclick="setLanguage('zh', '中文')">中文</li>
+                                    <li onclick="setLanguage('ko', '한국어')">한국어</li>
+                                    <li onclick="setLanguage('ar', 'العربية')">العربية</li>
+                                    <li onclick="setLanguage('hi', 'हिन्दी')">हिन्दी</li>
+                                    <li onclick="setLanguage('bn', 'বাংলা')">বাংলা</li>
+                                    <li onclick="setLanguage('pa', 'ਪੰਜਾਬੀ')">ਪੰਜਾਬੀ</li>
+                                    <li onclick="setLanguage('te', 'తెలుగు')">తెలుగు</li>
+                                    <li onclick="setLanguage('mr', 'मराठी')">मराठी</li>
+                                    <li onclick="setLanguage('ta', 'தமிழ்')">தமிழ்</li>
+                                    <li onclick="setLanguage('gu', 'ગુજરાતી')">ગુજરાતી</li>
+                                    <li onclick="setLanguage('kn', 'ಕನ್ನಡ')">ಕನ್ನಡ</li>
+                                    <li onclick="setLanguage('ml', 'മലയാളം')">മലയാളം</li>
+                                    <li onclick="setLanguage('th', 'ไทย')">ไทย</li>
+                                    <li onclick="setLanguage('vi', 'Tiếng Việt')">Tiếng Việt</li>
+                                    <li onclick="setLanguage('id', 'Bahasa Indonesia')">Bahasa Indonesia</li>
+                                    <li onclick="setLanguage('ms', 'Bahasa Melayu')">Bahasa Melayu</li>
+                                    <li onclick="setLanguage('tl', 'Tagalog')">Tagalog</li>
+                                    <li onclick="setLanguage('tr', 'Türkçe')">Türkçe</li>
+                                    <li onclick="setLanguage('pl', 'Polski')">Polski</li>
+                                    <li onclick="setLanguage('uk', 'Українська')">Українська</li>
+                                    <li onclick="setLanguage('el', 'Ελληνικά')">Ελληνικά</li>
+                                    <li onclick="setLanguage('cs', 'Čeština')">Čeština</li>
+                                    <li onclick="setLanguage('sk', 'Slovenčina')">Slovenčina</li>
+                                    <li onclick="setLanguage('hu', 'Magyar')">Magyar</li>
+                                    <li onclick="setLanguage('ro', 'Română')">Română</li>
+                                    <li onclick="setLanguage('bg', 'Български')">Български</li>
+                                    <li onclick="setLanguage('hr', 'Hrvatski')">Hrvatski</li>
+                                    <li onclick="setLanguage('sr', 'Српски')">Српски</li>
+                                    <li onclick="setLanguage('sl', 'Slovenščina')">Slovenščina</li>
+                                    <li onclick="setLanguage('sv', 'Svenska')">Svenska</li>
+                                    <li onclick="setLanguage('da', 'Dansk')">Dansk</li>
+                                    <li onclick="setLanguage('no', 'Norsk')">Norsk</li>
+                                    <li onclick="setLanguage('fi', 'Suomi')">Suomi</li>
+                                    <li onclick="setLanguage('nl', 'Nederlands')">Nederlands</li>
+                                    <li onclick="setLanguage('be', 'Беларуская')">Беларуская</li>
+                                    <li onclick="setLanguage('ka', 'ქართული')">ქართული</li>
+                                    <li onclick="setLanguage('hy', 'Հայերեն')">Հայերեն</li>
+                                    <li onclick="setLanguage('he', 'עברית')">עברית</li>
+                                    <li onclick="setLanguage('fa', 'فارسی')">فارسی</li>
+                                    <li onclick="setLanguage('ur', 'اردو')">اردو</li>
+                                    <li onclick="setLanguage('si', 'සිංහල')">සිංහල</li>
+                                    <li onclick="setLanguage('my', 'မြန်မာ')">မြန်မာ</li>
+                                    <li onclick="setLanguage('km', 'ខ្មែរ')">ខ្មែរ</li>
+                                    <li onclick="setLanguage('lo', 'ລາວ')">ລາວ</li>
+                                    <li onclick="setLanguage('am', 'አማርኛ')">አማርኛ</li>
+                                    <li onclick="setLanguage('sw', 'Kiswahili')">Kiswahili</li>
+                                    <li onclick="setLanguage('yo', 'Yorùbá')">Yorùbá</li>
+                                    <li onclick="setLanguage('ha', 'Hausa')">Hausa</li>
+                                    <li onclick="setLanguage('zu', 'isiZulu')">isiZulu</li>
+                                    <li onclick="setLanguage('xh', 'isiXhosa')">isiXhosa</li>
+                                    <li onclick="setLanguage('af', 'Afrikaans')">Afrikaans</li>
+                                    <li onclick="setLanguage('sq', 'Shqip')">Shqip</li>
+                                    <li onclick="setLanguage('eu', 'Euskera')">Euskera</li>
+                                    <li onclick="setLanguage('ca', 'Català')">Català</li>
+                                    <li onclick="setLanguage('gl', 'Galego')">Galego</li>
+                                    <li onclick="setLanguage('cy', 'Cymraeg')">Cymraeg</li>
+                                    <li onclick="setLanguage('ga', 'Gaeilge')">Gaeilge</li>
+                                    <li onclick="setLanguage('gd', 'Gàidhlig')">Gàidhlig</li>
+                                </ul>
+                                <input type="hidden" id="language-select" value="en">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group mt-2">
-    <div class="flex-between" style="margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-        <label style="margin:0;">Lyrics Payload *</label>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button class="btn btn-small" onclick="document.getElementById('lyrics-file-input').click()">
-                <span class="material-symbols-rounded" style="font-size: 16px;">upload</span> Upload
-            </button>
-            <input type="file" id="lyrics-file-input" class="hidden" accept=".lrc,.elrc,.txt,.ttml" onchange="handleLyricsFileUpload(event)">
+                        <div class="flex-between mb-1" style="flex-wrap: wrap; gap: 8px;">
+                            <label style="margin:0;">Lyrics Payload *</label>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn btn-small"
+                                    onclick="document.getElementById('lyrics-file-input').click()">
+                                    <span class="fluent-icon" style="font-size: 16px;"></span> Upload
+                                </button>
+                                <input type="file" id="lyrics-file-input" class="hidden" accept=".lrc,.elrc,.txt,.ttml"
+                                    onchange="handleLyricsFileUpload(event)">
 
-            <button class="btn btn-small" onclick="fixLyricsFormatting()" title="Fixes missing spacing between words automatically">
-                <span class="material-symbols-rounded" style="font-size: 16px;">auto_fix_high</span> Auto-Fix Spacing
-            </button>
+                                <button class="btn btn-small" onclick="fixLyricsFormatting()"
+                                    title="Fixes missing spacing">
+                                    <span class="fluent-icon" style="font-size: 16px;"></span> Auto-Fix
+                                </button>
 
-            <button class="btn btn-small" onclick="convertLyrics('ttml')">To TTML</button>
-            <button class="btn btn-small" onclick="convertLyrics('elrc')">To ELRC</button>
-        </div>
-    </div>
-    <textarea id="sub-lyrics" rows="10" class="input-element" placeholder="[00:12.00] Paste lyrics here..." oninput="updateSyncPreview()"></textarea>
-</div>
+                                <button class="btn btn-small" onclick="convertLyrics('ttml')">
+                                    <span class="fluent-icon" style="font-size: 14px;"></span> To TTML
+                                </button>
 
-                    <button class="btn btn-primary btn-full mt-2" id="submit-btn" onclick="submitLyricsForm()">
-                        <span class="material-symbols-rounded">publish</span> Publish to Unison
+                                <button class="btn btn-small" onclick="convertLyrics('elrc')">
+                                    <span class="fluent-icon" style="font-size: 14px;"></span> To ELRC
+                                </button>
+                            </div>
+                        </div>
+                        <textarea id="sub-lyrics" rows="12" class="input-element"
+                            placeholder="[00:12.00] Paste lyrics here..." oninput="updateSyncPreview()"></textarea>
+                    </div>
+                </div> <!-- END OF PANE-CONTENT -->
+
+                <!-- ZONE 2: The Fixed Footer (The Button) -->
+                <div class="form-footer">
+                    <button class="btn btn-primary btn-full" id="submit-btn" onclick="submitLyricsForm()">
+                        <span class="fluent-icon"></span> Publish to Unison
                     </button>
                 </div>
             </div>
 
-            <div class="preview-pane panel">
+            <div class="preview-pane">
                 <div class="media-container">
                     <div id="yt-player-container">
                         <div id="yt-player"></div>
@@ -97,51 +205,63 @@
                     <div id="custom-audio-player" class="hidden">
                         <div class="player-bg" id="player-bg"></div>
                         <div class="player-content">
-                            <img id="player-cover" src="https://better-lyrics.boidu.dev/icons/logo.svg" alt="Cover Art">
+                            <div id="player-agent-tag" class="vocal-agent-tag"></div>
+                            <img id="player-cover" src="music.png" alt="Cover">
                             <div id="player-title">Upload a Track</div>
                             <div id="player-artist">Artist Info</div>
                         </div>
                         <div class="player-controls-wrapper">
                             <div class="progress-row">
                                 <span id="time-current">0:00</span>
-                                <div class="progress-container" id="progress-container">
-                                    <div class="progress-bar" id="progress-bar"></div>
+                                <div class="progress-container">
+                                    <input type="range" id="audio-slider" class="fluent-slider" min="0" max="100"
+                                        value="0">
                                 </div>
                                 <span id="time-total">0:00</span>
                             </div>
-                            <div class="controls-row">
-                                <button id="play-pause-btn" class="play-btn">
-                                    <span class="material-symbols-rounded">play_arrow</span>
-                                </button>
+
+                            <!-- NEW CONTROLS ROW -->
+                            <div class="player-controls-main">
+                                <div class="volume-control">
+                                    <button id="mute-btn" class="btn-icon-plain"><span
+                                            class="fluent-icon"></span></button>
+                                    <div class="volume-slider-container">
+                                        <input type="range" id="volume-slider" class="fluent-slider mini-slider" min="0"
+                                            max="100" value="100">
+                                    </div>
+                                </div>
+
+                                <button id="play-pause-btn" class="play-btn"><span class="fluent-icon"></span></button>
+
+                                <div class="speed-control">
+                                    <button id="speed-btn" class="btn btn-small">
+                                        <span id="speed-icon" class="fluent-icon"></span>
+                                        <span id="speed-text">1x</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <audio id="local-player" class="hidden"></audio>
                     </div>
 
-                    <div id="media-placeholder" class="text-muted flex-center">
-                        <span class="material-symbols-rounded" style="font-size: 48px; margin-bottom: 8px;">play_circle</span>
+                    <div id="media-placeholder">
+                        <span class="fluent-icon" style="font-size: 48px; margin-bottom: 8px;"></span>
                         No Media Loaded
-                    </div>
-
-                    <div id="media-error-overlay" class="hidden">
-                        <span class="material-symbols-rounded" style="font-size: 48px; color: var(--danger)">error</span>
-                        <h4 style="margin-top: 16px;">Video Unavailable</h4>
-                        <p class="text-secondary" style="font-size: 0.9rem; margin-top: 8px;">
-                            The creator disabled embedding for this video.<br>
-                            Click the <b>Audio File</b> tab and upload the track<br>to sync and preview locally.
-                        </p>
                     </div>
                 </div>
                 <div id="sync-preview-content">
-                    <div class="empty-state text-muted">Lyrics will preview here</div>
+                    <div class="lyric-scroll-inner">
+                        <div class="empty-state text-muted">Lyrics will preview here</div>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
     <div id="toast-container"></div>
-
+    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
     <script src="app.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </body>
+
 </html>

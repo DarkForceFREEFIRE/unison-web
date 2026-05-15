@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/af0e6446-946c-477e-830e-0143152b229b" alt="Unison Web Banner" width="100%" />
+  <img src="https://github.com/user-attachments/assets/2a4acb6c-99bb-400f-9742-fa7beb987ce2" alt="Unison Web Banner" width="100%" />
 </p>
 
 <p align="center">
@@ -15,23 +15,20 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.2-blueviolet?style=for-the-badge" alt="Version" />
+  <img src="https://img.shields.io/badge/version-v1.3-blueviolet?style=for-the-badge" alt="Version" />
   <img src="https://img.shields.io/badge/Made%20with-❤️-red?style=for-the-badge" alt="Made with Heart" />
   <img src="https://img.shields.io/badge/Location-Sri%20Lanka-orange?style=for-the-badge" alt="Location" />
 </p>
 
 ---
 
-## 🚀 What's New in v1.2
+## 🚀 What's New in v1.3
 
 We have completely overhauled the experience to focus on **precision** and **workflow efficiency**.
 
-- **Brand New UI:** A sleek, modern, and distraction-free interface.
-- **Intelligent Conversion:** Effortlessly transform **ELRC** (word-synced) lyrics into standard **LRC** (line-synced) or professional **TTML** formats.
-- **Deep Discovery:** Advanced search functionality to find any song in the database instantly.
-- **Portable Lyrics:** One-click download function to save your synced lyrics locally.
-- **Quality Control:** Integrated Upvote/Downvote and Reporting systems to maintain database integrity.
-- **Live Sync Preview:** Real-time lyric visualization in both the **Submission** and **Detail** views.
+- **Brand New UI:** A modern, WinUI3 inspired interface.
+- **Bug fixes:** Between the **ELRC** and **TTML** conversion is accurate and supports standrad formats.
+- **Improved player:** The player now supports Karoke style lyrics and smooth scrollings. Also, the player shows the vocal agent at the YT preview pane.
 
 ---
 
@@ -106,7 +103,7 @@ async function uploadToUnison(youtubeUrl) {
 | **Frontend** | Vanilla JavaScript (ES6+), HTML5, CSS3 (Custom Properties) |
 | **Security** | Web Crypto API (ECDSA P-256) for secure, client-side signing |
 | **Deployment** | Vercel |
-| **Design** | Google Material Symbols |
+| **Design** | Microsoft WinUI3 Fluent |
 
 <p align="center">
   Made with ❤️ by <a href="https://github.com/https://github.com/DarkForceFREEFIRE">Walker 🇱🇰</a>

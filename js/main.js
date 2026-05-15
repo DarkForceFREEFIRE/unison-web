@@ -1,22 +1,21 @@
-import { DEFAULT_IDENTITY } from './config.js';
-import { publishToUnison, fetchUserLyrics } from './api.js';
+import { DEFAULT_IDENTITY } from '.api.js';
 
-// App State
+ App State
 let currentUser = null;
 let selectedFileContent = null;
 let selectedFileFormat = null;
 
-// DOM Elements
+ DOM Elements
 const screens = {
     login: document.getElementById('login-screen'),
     app: document.getElementById('app-screen')
 };
 
-// ==========================================
-// INITIALIZATION
-// ==========================================
+ ==========================================
+ INITIALIZATION
+ ==========================================
 window.addEventListener('DOMContentLoaded', () => {
-    // Check for saved login
+     Check for saved login
     const saved = localStorage.getItem('unisonIdentity');
     if (saved) {
         try {
@@ -32,34 +31,34 @@ window.addEventListener('DOMContentLoaded', () => {
     attachEventListeners();
 });
 
-// ==========================================
-// EVENT LISTENERS
-// ==========================================
+ ==========================================
+ EVENT LISTENERS
+ ==========================================
 function attachEventListeners() {
-    // Auth
+     Auth
     document.getElementById('btn-default-login').addEventListener('click', () => saveUser(DEFAULT_IDENTITY));
     document.getElementById('btn-logout').addEventListener('click', logout);
-    
-    // File uploads
+
+     File uploads
     document.getElementById('btn-upload-identity').addEventListener('click', () => document.getElementById('identity-file').click());
     document.getElementById('identity-file').addEventListener('change', handleIdentityUpload);
-    
+
     document.getElementById('btn-browse-lyrics').addEventListener('click', () => document.getElementById('lyrics-file').click());
     document.getElementById('lyrics-file').addEventListener('change', handleLyricsSelection);
 
-    // Tabs
+     Tabs
     document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', (e) => switchTab(e.target.dataset.target));
     });
 
-    // API Actions
+     API Actions
     document.getElementById('btn-publish').addEventListener('click', publishLyrics);
     document.getElementById('btn-refresh').addEventListener('click', loadMyLyrics);
 }
 
-// ==========================================
-// AUTHENTICATION
-// ==========================================
+ ==========================================
+ AUTHENTICATION
+ ==========================================
 function handleIdentityUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -96,9 +95,9 @@ function logout() {
     screens.app.style.visibility = 'hidden';
 }
 
-// ==========================================
-// UI LOGIC
-// ==========================================
+ ==========================================
+ UI LOGIC
+ ==========================================
 function showApp() {
     screens.app.style.display = 'block';
     screens.login.addEventListener('transitionend', () => {
@@ -112,11 +111,11 @@ function showApp() {
 }
 
 function switchTab(targetName) {
-    // Update Tab Buttons
+     Update Tab Buttons
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelector(`.tab[data-target="${targetName}"]`).classList.add('active');
 
-    // Update Tab Content
+     Update Tab Content
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.getElementById(`tab-${targetName}`).classList.add('active');
 
@@ -137,29 +136,29 @@ function setStatus(message, type) {
     el.innerText = message;
 }
 
-// ==========================================
-// FILE HANDLING
-// ==========================================
+ ==========================================
+ FILE HANDLING
+ ==========================================
 function handleLyricsSelection(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     document.getElementById('selected-file-name').innerText = file.name;
-    
+
     const ext = file.name.split('.').pop().toLowerCase();
     selectedFileFormat = (ext === 'ttml' || ext === 'lrc') ? ext : 'lrc';
 
     const reader = new FileReader();
     reader.onload = (e) => {
-        // Remove carriage returns (\r) and trim
-        selectedFileContent = e.target.result.replace(/\r\n/g, '\n').trim();
+         Remove carriage returns (\r) and trim
+        selectedFileContent = e.target.result.replace(g, '\n').trim();
     };
     reader.readAsText(file);
 }
 
-// ==========================================
-// APP LOGIC
-// ==========================================
+ ==========================================
+ APP LOGIC
+ ==========================================
 async function publishLyrics() {
     const vid = document.getElementById('vid').value.trim();
     const song = document.getElementById('song').value.trim();
@@ -200,9 +199,9 @@ async function publishLyrics() {
         if (album) payload.album = album;
 
         await publishToUnison(payload, currentUser);
-        
+
         setStatus("Successfully published! ✅", "success");
-        document.getElementById('vid').value = ''; // clear only ID to allow fast multi-uploads of same album
+        document.getElementById('vid').value = '';  clear only ID to allow fast multi-uploads of same album
     } catch (error) {
         setStatus(error.message, "error");
         console.error(error);
@@ -211,7 +210,7 @@ async function publishLyrics() {
 
 async function loadMyLyrics() {
     const tbody = document.querySelector('#lyrics-table tbody');
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading...<tr>';
 
     try {
         const json = await fetchUserLyrics(currentUser.keyId);
@@ -219,23 +218,14 @@ async function loadMyLyrics() {
 
         tbody.innerHTML = '';
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No lyrics found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No lyrics found.<tr>';
             return;
         }
 
         data.forEach(item => {
-            const lyricsId = item.id || item._id || item.videoId || 'N/A';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${lyricsId}</td>
-                <td>${item.song || 'Unknown'}</td>
-                <td>${item.artist || 'Unknown'}</td>
-                <td><span style="background:#333;padding:2px 6px;border-radius:4px;font-size:12px;">${(item.format || 'lrc').toUpperCase()}</span></td>
-                <td>${item.score || 0}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-error" style="text-align:center;">${error.message}</td></tr>`;
+            const lyricsId = item.id || item._id || item.videoId || 'Ntd>
+                <td>${item.song || 'Unknown'}<td>
+                <td><span style="background:#333;padding:2px 6px;border-radius:4px;font-size:12px;">${(item.format || 'lrc').toUpperCase()}<td>
+                <td>${item.score || 0}<td></tr>`;
     }
 }

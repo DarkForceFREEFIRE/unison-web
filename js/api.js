@@ -1,9 +1,5 @@
-import { API_BASE_URL } from './config.js';
-import { signPayload } from './crypto.js';
+import { API_BASE_URL } from '.crypto.js';
 
-/**
- * Publishes lyrics to the Unison server.
- */
 export async function publishToUnison(payload, identity) {
     const signature = await signPayload(identity.privateKey, payload);
 
@@ -13,10 +9,7 @@ export async function publishToUnison(payload, identity) {
         publicKey: identity.publicKey
     };
 
-    const response = await fetch(`${API_BASE_URL}/submit`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
+    const response = await fetch(`${API_BASE_URL}json",
             "x-key-id": identity.keyId
         },
         body: JSON.stringify(envelope)
@@ -30,9 +23,6 @@ export async function publishToUnison(payload, identity) {
     return response;
 }
 
-/**
- * Fetches the user's previously submitted lyrics.
- */
 export async function fetchUserLyrics(keyId) {
     const response = await fetch(`${API_BASE_URL}/mine?limit=50`, {
         headers: { "x-key-id": keyId }
